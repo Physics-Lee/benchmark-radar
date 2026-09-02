@@ -1,0 +1,208 @@
+"""Precision contract for the science-domain routing tags.
+
+These tests lock the red lines from the issue #511 plan: a tag is a
+routing signal derived from a record's own text, ordinary neural-network
+papers stay untagged, acronyms are word anchored, and the auto-generated
+PathMap hypothesis records that mention the blood-brain barrier do not
+count as neuroscience evidence. Positive cases use real titles from
+``data/snapshots/`` so the rules are anchored to the corpus they serve.
+"""
+
+from __future__ import annotations
+
+from benchmark_radar.science_domains import (
+    SCIENCE_DOMAINS,
+    derive_science_domains,
+    science_domains_for_record,
+)
+
+
+def test_real_corpus_neuroscience_titles_are_tagged():
+    # Titles observed verbatim in data/snapshots/.
+    assert derive_science_domains(
+        "LibriBrain100: One Hundred Hours of Broad and Deep MEG Data "
+        "for Neural Speech Decoding at Scale"
+    ) == ["neuroscience"]
+    assert derive_science_domains(
+        "BrainBench: Benchmarking Large Language Models for Comprehensive EEG Understanding"
+    ) == ["neuroscience"]
+    assert derive_science_domains(
+        "CORAL: A Benchmark for Structure-aware and Brain-wide "
+        "Neuron Reconstruction in Light Microscopy"
+    ) == ["neuroscience"]
+    assert derive_science_domains(
+        "Test-Time Adaptation for EEG Foundation Models: A Systematic Study"
+    ) == ["neuroscience"]
+
+
+def test_interface_strong_signals_tag_in_every_spelling():
+    # "Brain Computer Interface" without the hyphen is the spelling the
+    # in-silico BCI benchmark title in the corpus actually uses; the
+    # machine variant and the en-dash form come from the domain review.
+    assert derive_science_domains(
+        "Intent Drift in LLM-Assisted Brain Computer Interface Communication"
+    ) == ["neuroscience"]
+    assert derive_science_domains(
+        "A benchmark for brain-computer interface decoding robustness"
+    ) == ["neuroscience"]
+    assert derive_science_domains("High-accuracy brain–machine interface control") == [
+        "neuroscience"
+    ]
+
+
+def test_brain_to_naming_family_tags():
+    # Brain2Text / Brain2Voice / Brain2Qwerty and any future brain2X
+    # variant, plus the "brain-to-text" spelling. These are exactly the
+    # names "brain\b" cannot reach, because digits keep "brain" and "2"
+    # inside one word.
+    assert derive_science_domains("Brain2Qwerty: fMRI-to-Keyboard Decoding") == ["neuroscience"]
+    assert derive_science_domains("A Brain2Text decoding system evaluation") == ["neuroscience"]
+    assert derive_science_domains("Toward brain-to-voice speech synthesis") == ["neuroscience"]
+    # The spaced family form is real BCI work too, not a metaphor.
+    assert derive_science_domains("Brain-to-brain interface experiments") == ["neuroscience"]
+
+
+def test_bci_vocabulary_tags_without_neuroscience_word_overlap():
+    # MOABB arrives as a repository title; the domain evidence lives in
+    # the summary, which is exactly how the shared derivation reads it.
+    assert science_domains_for_record(
+        {
+            "title": "NeuroTechX/moabb",
+            "summary": "The mother of all BCI benchmarks: motor imagery "
+            "pipelines evaluated across many datasets.",
+        }
+    ) == ["neuroscience"]
+    assert derive_science_domains("SSVEP and P300 spellers evaluated offline") == ["neuroscience"]
+
+
+def test_domain_review_vocabulary_tags():
+    # Terms supplied in the issue #511 domain review, plus the full
+    # technique names behind the acronyms.
+    assert derive_science_domains("A speech neuroprosthesis benchmark for word classification") == [
+        "neuroscience"
+    ]
+    assert derive_science_domains("Decoding from chronic Utah array recordings") == ["neuroscience"]
+    assert derive_science_domains("Whole-brain calcium imaging dataset") == ["neuroscience"]
+    assert derive_science_domains("Optogenetic stimulation protocols") == ["neuroscience"]
+    assert derive_science_domains("Seizure onset zone localization from sEEG") == ["neuroscience"]
+    assert derive_science_domains("fnirs-based motor imagery classification") == ["neuroscience"]
+    assert derive_science_domains(
+        "Electroencephalography sleep staging, electrocorticographic control"
+    ) == ["neuroscience"]
+
+
+def test_neural_network_papers_are_not_tagged():
+    # The single highest-volume false-positive source: "neural" is never
+    # a trigger on its own, only compounds like "neural decoding" are.
+    assert (
+        derive_science_domains(
+            "A Survey of Benchmarking Neural Network Training at Scale",
+            "We evaluate neural networks and deep learning optimizers.",
+        )
+        == []
+    )
+    assert derive_science_domains("Scaling Laws for Neural Language Models") == []
+
+
+def test_acronym_terms_are_word_anchored():
+    # "meg" as a standalone word is magnetoencephalography and should
+    # tag; only compound words like megabyte/megapixel must not.
+    assert derive_science_domains("Training megabyte-scale models efficiently") == []
+    assert derive_science_domains("Streaming megapixel video datasets") == []
+    assert derive_science_domains("A MEG study of cortical oscillations") == ["neuroscience"]
+
+
+def test_architecture_prose_does_not_tag():
+    # Found in a corpus audit: three distinct mechanisms by which
+    # non-neuro records said "neuron"/"brain". Layer-size talk, the
+    # Spanish neural-network name, and brainstorming are all closed out.
+    assert (
+        derive_science_domains(
+            "基于自适应图神经网络的动态量子算法",
+            "The adapter tunes the connection weights and neuron counts.",
+        )
+        == []
+    )
+    assert (
+        derive_science_domains(
+            "Active noise control dataset",
+            "El sistema implementa una red neuronal autorregresiva no lineal.",
+        )
+        == []
+    )
+    assert (
+        derive_science_domains(
+            "Logo Generator: Persona Specification",
+            "Through structured brand discovery, brainstorm unique logo concepts.",
+        )
+        == []
+    )
+
+
+def test_closed_compound_benchmark_names_still_tag():
+    # "BrainBench" is one word, so the right-edge-anchored "brain" cannot
+    # reach it; the name is an explicit pattern instead.
+    assert derive_science_domains("BrainBench: EEG Understanding") == ["neuroscience"]
+
+
+def test_product_and_metaphor_uses_do_not_tag():
+    # Live-corpus audit (September window): bare "cortex" only ever named
+    # the Snowflake product, and "the LLM acts as the brain of..." used
+    # brain as a metaphor for computation.
+    assert (
+        derive_science_domains(
+            "curious-bigcat/snowflake-cortex-dbx-genie-agents-benchmark",
+            "A benchmark for Snowflake Cortex agent workflows.",
+        )
+        == []
+    )
+    assert (
+        derive_science_domains(
+            "ReactHuman: A Physics-Grounded Benchmark",
+            "The evaluated MLLM acts as the brain of a simulated humanoid.",
+        )
+        == []
+    )
+
+
+def test_cortical_compounds_still_tag_without_bare_cortex():
+    # Dropping bare "cortex" must not drop real neuro uses of the family:
+    # cortical folding, corticospinal tracts.
+    assert derive_science_domains("Representation learning of human cortical folding patterns") == [
+        "neuroscience"
+    ]
+    assert derive_science_domains("Tractography of the corticospinal tract") == ["neuroscience"]
+
+
+def test_blood_brain_barrier_hypothesis_records_are_not_tagged():
+    # PathMap auto-generates hypothesis "datasets" whose only neuro word
+    # is the barrier phrase; the whole-domain veto keeps them untagged.
+    assert (
+        derive_science_domains(
+            "Dataset: Hypothesis: Intranasal delivery exploits the "
+            "blood-brain barrier to bypass systemic transport."
+        )
+        == []
+    )
+    assert derive_science_domains("Predicting blood brain barrier permeability") == []
+
+
+def test_published_domain_order_is_the_single_merged_facet():
+    # BCI folded into neuroscience: the bci-only records were a handful
+    # per month, too few to power a filter of their own.
+    assert SCIENCE_DOMAINS == ("neuroscience",)
+    # Multiple vocabulary hits still yield one deterministic tag.
+    assert derive_science_domains("EEG-based motor imagery BCI dataset") == ["neuroscience"]
+
+
+def test_empty_and_missing_text_derive_no_domains():
+    assert derive_science_domains("") == []
+    assert science_domains_for_record({}) == []
+    assert science_domains_for_record({"title": None, "summary": None}) == []
+
+
+def test_derivation_is_deterministic():
+    title = "Neural decoding benchmarks for spiking networks"
+    first = derive_science_domains(title, "connectome-scale evaluation")
+    assert first == derive_science_domains(title, "connectome-scale evaluation")
+    assert first == ["neuroscience"]

@@ -123,7 +123,7 @@ def test_readmes_link_the_current_technical_report():
         assert f'<a href="{TECHNICAL_REPORT}">' in text
         assert "arXiv-Paper" in text
         assert f'<a href="{HUGGING_FACE_PAPER}">' in text
-        assert "HuggingFace-Models" in text
+        assert "%232%20Paper%20of%20the%20Day%20%E2%80%A2%20Upvote%20us" in text
         assert f"({TECHNICAL_REPORT})" in text
         assert LEGACY_REPORT_PDF not in text
 
@@ -134,7 +134,7 @@ def test_technical_report_readme_links_both_paper_pages():
     assert f'<a href="{TECHNICAL_REPORT}">' in text
     assert "arXiv-Paper" in text
     assert f'<a href="{HUGGING_FACE_PAPER}">' in text
-    assert "HuggingFace-Models" in text
+    assert "%232%20Paper%20of%20the%20Day%20%E2%80%A2%20Upvote%20us" in text
 
 
 def test_citation_metadata_prefers_the_technical_report():

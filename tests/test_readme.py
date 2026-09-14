@@ -25,7 +25,8 @@ README = Path("README.md")
 README_ZH = Path("README.zh-CN.md")
 SKILL = Path("skills/benchmark-radar/SKILL.md")
 TECHNICAL_REPORT = "https://arxiv.org/abs/2609.11115"
-REPORT_PDF = "https://github.com/ktwu01/benchmark-radar-paper/blob/main/main.pdf"
+HUGGING_FACE_PAPER = "https://huggingface.co/papers/2609.11115"
+LEGACY_REPORT_PDF = "https://github.com/ktwu01/benchmark-radar-paper/blob/main/main.pdf"
 
 
 def _run(day: int) -> RadarRun:
@@ -114,15 +115,26 @@ def test_chinese_readme_mirrors_the_english_one():
 
 
 def test_readmes_link_the_current_technical_report():
-    # The badge and the resource list point at the tracked LaTeX build, which is
-    # the current report and reads directly on GitHub. The arXiv link stays in
-    # the citation block, where it names the preferred citation.
+    # The badge and resource links point at the published arXiv paper rather
+    # than the source repository. The Daily Papers badge provides a second
+    # discovery path while the LaTeX source remains linked separately.
     for readme in (README, README_ZH):
         text = readme.read_text(encoding="utf-8")
-        assert f'<a href="{REPORT_PDF}">' in text
-        assert "TECH%20REPORT" in text
-        assert f"({REPORT_PDF})" in text
-        assert TECHNICAL_REPORT in text
+        assert f'<a href="{TECHNICAL_REPORT}">' in text
+        assert "arXiv-Paper" in text
+        assert f'<a href="{HUGGING_FACE_PAPER}">' in text
+        assert "HuggingFace-Models" in text
+        assert f"({TECHNICAL_REPORT})" in text
+        assert LEGACY_REPORT_PDF not in text
+
+
+def test_technical_report_readme_links_both_paper_pages():
+    text = Path("docs/technical-report/README.md").read_text(encoding="utf-8")
+
+    assert f'<a href="{TECHNICAL_REPORT}">' in text
+    assert "arXiv-Paper" in text
+    assert f'<a href="{HUGGING_FACE_PAPER}">' in text
+    assert "HuggingFace-Models" in text
 
 
 def test_citation_metadata_prefers_the_technical_report():

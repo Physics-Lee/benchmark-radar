@@ -15,7 +15,8 @@ connector, a first-party feed, or the Hacker News attention source. -->
 <p align="center">
   <a href="https://benchmark-radar.org/"><img alt="Benchmarks collected" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fbenchmark-radar.org%2Fdata%2Frecords-badge.json&amp;style=for-the-badge"></a>
   <a href="https://github.com/ktwu01/benchmark-radar/releases/download/cli-data/benchmark-radar-data.zip"><img alt="Download data" src="https://img.shields.io/badge/%E2%86%93%20DOWNLOAD%20DATA-2f81f7?style=for-the-badge"></a>
-  <a href="https://github.com/ktwu01/benchmark-radar-paper/blob/main/main.pdf"><img alt="Read the technical report" src="https://img.shields.io/badge/TECH%20REPORT-1682D4?style=for-the-badge&amp;logo=latex&amp;logoColor=white"></a>
+  <a href="https://arxiv.org/abs/2609.11115"><img src="https://img.shields.io/badge/arXiv-Paper-red?style=for-the-badge&logo=arxiv" alt="arXiv"></a>
+  <a href="https://huggingface.co/papers/2609.11115"><img src="https://img.shields.io/badge/HuggingFace-Models-yellow?style=for-the-badge&logo=huggingface" alt="Hugging Face"></a>
   <a href="https://x.com/ktwu01"><img alt="X" src="https://img.shields.io/badge/-000000?style=for-the-badge&amp;logo=x&amp;logoColor=white"></a>
   <a href="https://www.linkedin.com/in/ktwu01"><img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&amp;logo=linkedin&amp;logoColor=white"></a>
   <a href="https://scholar.google.com/citations?user=s9w1k-cAAAAJ&amp;hl=en"><img alt="Google Scholar" src="https://img.shields.io/badge/Google%20Scholar-4285F4?style=for-the-badge&amp;logo=googlescholar&amp;logoColor=white"></a>
@@ -85,7 +86,7 @@ written in the
 - [Model-report registry](data/model_cards.yml)
 - [Public corpus schema](docs/cumulative-corpus.schema.json)
 - [Citation information](https://benchmark-radar.org/cite/)
-- [Technical report](https://github.com/ktwu01/benchmark-radar-paper/blob/main/main.pdf) (LaTeX source: [`main.tex`](https://github.com/ktwu01/benchmark-radar-paper/blob/main/main.tex))
+- [Technical report](https://arxiv.org/abs/2609.11115) (LaTeX source: [`main.tex`](https://github.com/ktwu01/benchmark-radar-paper/blob/main/main.tex))
 - [Configuration](config.yml)
 - **Developer setup:** `python -m pip install -e '.[dev]' && benchmark-radar normalize-catalog`
 - **Support / bugs:** [open an issue](https://github.com/ktwu01/benchmark-radar/issues)
@@ -160,7 +161,7 @@ daily feeds, downloadable evidence, a command-line interface (CLI) for offline
 queries, and reproducible analysis.
 
 This summarizes the
-[technical report](https://github.com/ktwu01/benchmark-radar-paper/blob/main/main.pdf),
+[technical report](https://arxiv.org/abs/2609.11115),
 which describes collection and retrieval, audits the full catalog, and examines
 benchmark saturation, adoption trends, and the limits of score comparisons.
 

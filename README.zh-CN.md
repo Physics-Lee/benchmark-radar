@@ -11,7 +11,8 @@
 <p align="center">
   <a href="https://benchmark-radar.org/"><img alt="已收集的 benchmark 记录" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fbenchmark-radar.org%2Fdata%2Frecords-badge.json&amp;style=for-the-badge"></a>
   <a href="https://github.com/ktwu01/benchmark-radar/releases/download/cli-data/benchmark-radar-data.zip"><img alt="下载数据集" src="https://img.shields.io/badge/Dataset-download%20ZIP-2f81f7?style=for-the-badge&amp;logo=json&amp;logoColor=white"></a>
-  <a href="https://github.com/ktwu01/benchmark-radar-paper/blob/main/main.pdf"><img alt="阅读技术报告" src="https://img.shields.io/badge/TECH%20REPORT-1682D4?style=for-the-badge&amp;logo=latex&amp;logoColor=white"></a>
+  <a href="https://arxiv.org/abs/2609.11115"><img src="https://img.shields.io/badge/arXiv-Paper-red?style=for-the-badge&logo=arxiv" alt="arXiv"></a>
+  <a href="https://huggingface.co/papers/2609.11115"><img src="https://img.shields.io/badge/HuggingFace-Models-yellow?style=for-the-badge&logo=huggingface" alt="Hugging Face"></a>
   <a href="https://x.com/ktwu01"><img alt="X" src="https://img.shields.io/badge/X-000000?style=for-the-badge&amp;logo=x&amp;logoColor=white"></a>
   <a href="https://www.linkedin.com/in/ktwu01"><img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&amp;logo=linkedin&amp;logoColor=white"></a>
   <a href="https://scholar.google.com/citations?user=s9w1k-cAAAAJ&amp;hl=en"><img alt="Google Scholar" src="https://img.shields.io/badge/Google%20Scholar-4285F4?style=for-the-badge&amp;logo=googlescholar&amp;logoColor=white"></a>
@@ -74,7 +75,7 @@ npx skills add ktwu01/benchmark-radar
 - [模型报告登记册](data/model_cards.yml)
 - [公开语料 schema](docs/cumulative-corpus.schema.json)
 - [引用信息](https://benchmark-radar.org/cite/)
-- [技术报告](https://github.com/ktwu01/benchmark-radar-paper/blob/main/main.pdf)（LaTeX 源文件：[`main.tex`](https://github.com/ktwu01/benchmark-radar-paper/blob/main/main.tex)）
+- [技术报告](https://arxiv.org/abs/2609.11115)（LaTeX 源文件：[`main.tex`](https://github.com/ktwu01/benchmark-radar-paper/blob/main/main.tex)）
 - [配置](config.yml)
 - **开发环境：** `python -m pip install -e '.[dev]' && benchmark-radar normalize-catalog`
 - **支持 / 反馈：** [提交 issue](https://github.com/ktwu01/benchmark-radar/issues)
@@ -134,7 +135,7 @@ saturation 和趋势视图、每日 feed、可下载的证据数据，以及一�
 工具（CLI）和可复现的分析流程。
 
 以上是
-[技术报告](https://github.com/ktwu01/benchmark-radar-paper/blob/main/main.pdf)
+[技术报告](https://arxiv.org/abs/2609.11115)
 的概要。报告里详细写了数据采集和检索方式，对整个目录做了审计，并讨论了 benchmark
 的 saturation、被采用的趋势，以及分数之间横向比较的局限。
 

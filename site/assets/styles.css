@@ -254,46 +254,58 @@ th {
 }
 
 .hf-upvote-banner {
-  border-bottom: 1px solid #d9ad00;
-  background: #ffd21e;
+  border-bottom: 1px solid #e8cd83;
+  background: #fffbeb;
 }
 
-.hf-upvote-banner > a {
+.hf-upvote-banner-inner {
   display: flex;
   width: min(1680px, calc(100% - 48px));
-  min-height: 3rem;
   gap: 0.65rem;
   align-items: center;
   justify-content: center;
   margin-inline: auto;
-  color: #1f2328;
+  padding-block: 0.25rem;
+}
+
+.hf-paper-award {
+  width: 240px;
+  min-width: 0;
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+.hf-paper-award img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.hf-upvote-copy {
+  display: inline-flex;
+  min-height: 44px;
+  gap: 0.4rem;
+  align-items: center;
+  color: #805619;
   font-family: var(--utility);
   font-size: 0.78rem;
   font-weight: 750;
   letter-spacing: 0.035em;
-  text-decoration: none;
-}
-
-.hf-paper-rank {
-  display: inline-flex;
-  gap: 0.4rem;
-  align-items: center;
-  padding: 0.24rem 0.55rem;
-  border-radius: 999px;
-  background: #1f2328;
-  color: #ffd21e;
-  line-height: 1.25;
-}
-
-.hf-upvote-copy {
+  white-space: nowrap;
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.18em;
 }
 
-.hf-upvote-banner > a:hover .hf-upvote-copy,
-.hf-upvote-banner > a:focus-visible .hf-upvote-copy {
+.hf-upvote-copy:hover,
+.hf-upvote-copy:focus-visible {
   text-decoration-thickness: 2px;
+}
+
+.hf-paper-award:focus-visible,
+.hf-upvote-copy:focus-visible {
+  outline: 2px solid #805619;
+  outline-offset: 3px;
 }
 
 .repo-badge {
@@ -4351,10 +4363,12 @@ footer {
     width: min(100% - 28px, 1440px);
   }
 
-  .hf-upvote-banner > a {
+  .hf-upvote-banner-inner {
     width: min(100% - 28px, 1440px);
-    min-height: 3.25rem;
-    gap: 0.45rem;
+    gap: 0.5rem;
+  }
+
+  .hf-upvote-copy {
     font-size: 0.7rem;
     letter-spacing: 0.02em;
   }

@@ -1442,20 +1442,23 @@ def test_hugging_face_rank_badge_asks_for_an_upvote():
     assert 'target="_blank"' in html
     assert 'rel="noopener noreferrer"' in html
     assert 'class="hf-upvote-banner"' in html
-    assert 'data-i18n="#2 Paper of the Day"' in html
-    assert 'data-i18n="We need your upvote"' in html
+    assert 'href="https://huggingface.co/papers/date/2026-09-14"' in html
+    assert 'src="/assets/hf-paper-of-the-day.svg"' in html
+    assert 'data-i18n="Upvote us"' in html
     assert (
-        'data-i18n-aria="Benchmark Radar is #2 Paper of the Day on Hugging Face. '
-        'Upvote the paper"' in html
+        'data-i18n-aria="Hugging Face: #1 Paper of the Day, '
+        'September 14, 2026. View the ranking"' in html
     )
-    assert ".hf-paper-rank" in styles
-    assert ".hf-upvote-banner > a:focus-visible .hf-upvote-copy" in styles
+    badge = Path("site/assets/hf-paper-of-the-day.svg").read_text(encoding="utf-8")
+    assert "#1 Paper of the Day, September 14, 2026" in badge
+    assert ".hf-paper-award:focus-visible" in styles
+    assert ".hf-upvote-copy:focus-visible" in styles
     mobile = styles.split("@media (max-width: 760px)", 1)[1]
-    assert ".hf-upvote-banner > a" in mobile
+    assert ".hf-upvote-banner-inner" in mobile
     assert "width: min(100% - 28px, 1440px)" in mobile
-    assert '"#2 Paper of the Day": "今日论文第 2 名"' in script
-    assert '"We need your upvote": "帮我们投一票"' in script
-    assert '"Benchmark Radar 登上 Hugging Face 今日论文第 2 名，帮我们投一票"' in script
+    assert '"Upvote us": "帮我们投一票"' in script
+    assert '"Hugging Face 每日论文第 1 名，2026 年 9 月 14 日。查看榜单"' in script
+    assert "#2 Paper of the Day" not in html + script
 
 
 def test_repo_badge_counts_are_visible():

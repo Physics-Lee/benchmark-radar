@@ -1180,10 +1180,9 @@ const I18N = {
       " · 最近 18 个月窗口内发布的 {count} 项已经出现在三家及以上有明确日期的机构中。在解读原始排名之前，先看它们的轨迹变化。",
     "Show all {count} benchmarks": "显示全部 {count} 个benchmark",
     "Star this repository on GitHub. {count} stars": "在 GitHub 上给这个仓库点 Star。{count} 个 star",
-    "#2 Paper of the Day": "今日论文第 2 名",
-    "We need your upvote": "帮我们投一票",
-    "Benchmark Radar is #2 Paper of the Day on Hugging Face. Upvote the paper":
-      "Benchmark Radar 登上 Hugging Face 今日论文第 2 名，帮我们投一票",
+    "Upvote us": "帮我们投一票",
+    "Hugging Face: #1 Paper of the Day, September 14, 2026. View the ranking":
+      "Hugging Face 每日论文第 1 名，2026 年 9 月 14 日。查看榜单",
   },
 };
 

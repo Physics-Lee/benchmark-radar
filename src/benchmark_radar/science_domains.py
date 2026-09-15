@@ -102,14 +102,28 @@ _RULES: Final[dict[str, dict[str, tuple[str, ...]]]] = {
             r"meg\b",
             r"ecog\b",
             r"fmri\b",
-            # Full technique names behind the acronyms above.
+            # Full technique names behind the acronyms above. The bare stem
+            # "encephalograph" cannot reach the two real technique names --
+            # the word-start lookbehind stops it matching inside
+            # "electroencephalography" -- so both full forms are explicit
+            # (Codex review, PR #647).
+            r"electroencephalograph",
+            r"magnetoencephalograph",
             r"electrocorticograph",
             r"encephalograph",
             r"neural decoding",
             r"neural encoding",
             r"neural signal",
             r"neural activity",
-            r"spiking",
+            # Spiking in biological tissue, not the SNN/neuromorphic
+            # architecture sense: "spiking neural networks" and
+            # "spiking-inspired" describe artificial models (Codex review,
+            # PR #647), so the bare stem is gone and only tissue-level
+            # phrases remain.
+            r"spiking neurons?\b",
+            r"neural spiking",
+            r"spike trains?\b",
+            r"spike sorting",
             r"connectome",
             # Bare "cortex" is deliberately absent: in the live corpus its
             # every hit was a product name (Snowflake Cortex) or anatomy
@@ -133,7 +147,21 @@ _RULES: Final[dict[str, dict[str, tuple[str, ...]]]] = {
         # "as the brain of": the agent-as-brain metaphor ("the LLM acts as
         # the brain of a simulated humanoid"), a live-corpus false positive
         # where "brain" describes computation, not tissue.
-        "exclude": (r"blood[- ]brain barrier", r"as the brain of"),
+        # "brain-inspired" / "brain-like": neuromorphic-computing framing,
+        # the same metaphor class (Codex review, PR #647: "Pathway's
+        # brain-inspired architecture development").
+        # "sp. nov." / "gen. nov.": species-description genre markers. A
+        # fungal taxonomy record can mention "cortical cells of roots"
+        # without being neuroscience; genus/species novelty is the paper-
+        # genre marker that separates it, the same genre-marker pattern the
+        # main taxonomy uses for surveys (Codex review, PR #647).
+        "exclude": (
+            r"blood[- ]brain barrier",
+            r"as the brain of",
+            r"brain[- ]inspired",
+            r"brain[- ]like",
+            r"(?:sp|spp|gen)\. nov",
+        ),
     },
 }
 

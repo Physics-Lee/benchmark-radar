@@ -91,6 +91,43 @@ def test_domain_review_vocabulary_tags():
     ) == ["neuroscience"]
 
 
+def test_full_technique_names_tag_on_their_own():
+    # Codex review, PR #647: the word-start lookbehind stops the bare
+    # "encephalograph" stem matching inside "electroencephalography", so
+    # both full technique names must be explicit patterns. The earlier
+    # test above passed only via its electrocorticographic clause.
+    assert derive_science_domains("Electroencephalography sleep staging") == ["neuroscience"]
+    assert derive_science_domains("Magnetoencephalography source localization") == ["neuroscience"]
+
+
+def test_artificial_spiking_architectures_do_not_tag():
+    # Codex review, PR #647: "spiking neural networks" and
+    # "spiking-inspired" describe artificial models (live records:
+    # HazeSpikeMamba dehazing, Twin Network Augmentation on CIFAR), so
+    # only tissue-level spiking phrases remain.
+    assert derive_science_domains("HazeSpikeMamba: Spiking-Inspired Dehazing") == []
+    assert derive_science_domains("Twin Network Augmentation for Spiking Neural Networks") == []
+    # Biological spiking still tags.
+    assert derive_science_domains("Spike sorting for large-scale recordings") == ["neuroscience"]
+    assert derive_science_domains("Latent structure in spike trains") == ["neuroscience"]
+
+
+def test_neuromorphic_framing_and_species_descriptions_do_not_tag():
+    # Codex review, PR #647: brain-inspired computing is the agent-as-brain
+    # metaphor class, and species-description genre markers (a fungal
+    # taxonomy record mentioning "cortical cells of roots") are not
+    # neuroscience regardless of vocabulary overlap.
+    assert (
+        derive_science_domains("Pathway's brain-inspired architecture development on SageMaker")
+        == []
+    )
+    assert derive_science_domains("A brain-like computing substrate") == []
+    assert (
+        derive_science_domains("Reflexicalyptra gen. nov., a fungus with cortical cells in roots")
+        == []
+    )
+
+
 def test_neural_network_papers_are_not_tagged():
     # The single highest-volume false-positive source: "neural" is never
     # a trigger on its own, only compounds like "neural decoding" are.

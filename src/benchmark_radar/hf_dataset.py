@@ -63,9 +63,8 @@ tags:
 size_categories:
   - 10K<n<100K
 configs:
-  - config_name: default
-    data_files: "data/catalog.jsonl"
   - config_name: catalog
+    default: true
     data_files: "data/catalog.jsonl"
   - config_name: scores
     data_files: "data/scores.jsonl"
@@ -152,7 +151,7 @@ Contains {catalog_count:,} normalized benchmark records.
 Contains {scores_count:,} reported evaluation score observations across 870+ frontier models.
 - `obs_id`: Unique observation identifier
 - `key`: Benchmark key
-- `model_id`: Model slug
+- `model_id`: Source-specific stable model identifier
 - `model_name`: Model display name
 - `organization`: Model creator/lab (e.g. `DeepSeek`, `OpenAI`, `Anthropic`, `Google`, `Meta`)
 - `value`: Numeric reported score
@@ -160,7 +159,7 @@ Contains {scores_count:,} reported evaluation score observations across 870+ fro
 - `value_kind`: Value data type (`number`, `percentage`, etc.)
 - `reported_date`: Model announcement or report publication date
 - `date_precision`: Precision level of reported date
-- `reported_by`: Source reporting modality (`self_reported`, `evaluated`)
+- `reported_by`: Source reporting modality (`self_reported`, `third_party`)
 - `source`: Score ingestion source
 - `source_url`: URL of source leaderboard or technical report
 - `document_id`: Source document citation ID
@@ -190,7 +189,7 @@ Contains {observations_count:,} discrete daily discovery events.
 - `discovered_at`: Timestamp of discovery
 - `published_at`: Original creation / publication timestamp
 - `total_score`: Radar composite relevance score
-- `event_kind`: Event category (`new`, `updated`)
+- `event_kind`: Event category (`discovered`, `released`, `updated`)
 - `organizations`: Identified affiliated organizations
 - `metrics`: Point-in-time metrics (stars, likes, downloads)
 
@@ -272,6 +271,7 @@ def export_hf_dataset(
     # 2. Extract catalog & scores with strict shard validation
     catalog_rows = []
     score_rows = []
+    score_ids = set()
 
     for b in benchmarks:
         slug = b.get("slug", "")
@@ -291,9 +291,54 @@ def export_hf_dataset(
             )
 
         artifacts = shard_record.get("artifacts", [])
-        for _src, src_data in shard.get("scores_by_source", {}).items():
-            for r in src_data.get("rows", []):
-                score_rows.append(r)
+        benchmark_score_rows = []
+        scores_by_source = shard.get("scores_by_source")
+        if not isinstance(scores_by_source, dict):
+            raise ValueError(f"Detail shard {shard_path} scores_by_source must be an object")
+        for source, source_data in scores_by_source.items():
+            rows = source_data.get("rows") if isinstance(source_data, dict) else None
+            if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
+                raise ValueError(
+                    f"Detail shard {shard_path} score rows for {source!r} must be objects"
+                )
+            for row in rows:
+                if row.get("key") != key:
+                    raise ValueError(
+                        f"Detail shard {shard_path} contains a score for {row.get('key')!r}; "
+                        f"expected {key!r}"
+                    )
+                if row.get("source") != source or source != b["source"]:
+                    raise ValueError(
+                        f"Detail shard {shard_path} score source {row.get('source')!r} "
+                        f"does not match bucket {source!r} and catalog source {b['source']!r}"
+                    )
+                for field in (
+                    "obs_id",
+                    "model_id",
+                    "model_name",
+                    "raw_value",
+                    "value_kind",
+                    "source_url",
+                ):
+                    if not isinstance(row.get(field), str) or not row[field]:
+                        raise ValueError(
+                            f"Detail shard {shard_path} score {field} must be a non-empty string"
+                        )
+                if isinstance(row.get("value"), bool) or not isinstance(
+                    row.get("value"), (int, float)
+                ):
+                    raise ValueError(f"Detail shard {shard_path} score value must be numeric")
+                if row["obs_id"] in score_ids:
+                    raise ValueError(f"Duplicate score observation ID {row['obs_id']!r}")
+                score_ids.add(row["obs_id"])
+            benchmark_score_rows.extend(rows)
+        expected_score_count = b.get("score_count")
+        if expected_score_count != len(benchmark_score_rows):
+            raise ValueError(
+                f"Detail shard {shard_path} has {len(benchmark_score_rows)} score rows; "
+                f"index declares {expected_score_count!r}"
+            )
+        score_rows.extend(benchmark_score_rows)
 
         paper_url = next(
             (a["url"] for a in artifacts if a.get("kind") == "paper"),

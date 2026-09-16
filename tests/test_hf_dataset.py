@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 
 import pytest
+import yaml
 
 import benchmark_radar.hf_dataset as hf_dataset
 from benchmark_radar.corpus import CorpusError
@@ -16,6 +17,9 @@ def _write_catalog(
     key: str = "test:bench",
     slug: str = "test-bench",
     shard_key: str | None = None,
+    catalog_source: str = "llm_stats",
+    score_count: int = 0,
+    score_rows: list[dict] | None = None,
 ) -> QueryPaths:
     index_file = root / "benchmark-index.json"
     shards_dir = root / "benchmarks"
@@ -24,7 +28,7 @@ def _write_catalog(
         "key": key,
         "slug": slug,
         "name": "Test benchmark",
-        "source": "llm_stats",
+        "source": catalog_source,
         "description": "A test benchmark.",
         "categories": [],
         "languages": [],
@@ -32,22 +36,45 @@ def _write_catalog(
         "has_repo": False,
         "has_dataset": False,
         "has_size": False,
+        "score_count": score_count,
     }
     index_file.write_text(
         json.dumps({"schema_version": 1, "count": 1, "benchmarks": [benchmark]}),
         encoding="utf-8",
     )
     if shard_key is not None:
+        scores_by_source = {"llm_stats": {"rows": score_rows}} if score_rows is not None else {}
         (shards_dir / f"{slug}.json").write_text(
-            json.dumps({"record": {"key": shard_key}}),
+            json.dumps(
+                {
+                    "record": {"key": shard_key},
+                    "scores_by_source": scores_by_source,
+                }
+            ),
             encoding="utf-8",
         )
     return QueryPaths(index=index_file, shards=shards_dir)
 
 
-def _allow_tiny_test_catalog(monkeypatch: pytest.MonkeyPatch) -> None:
+def _allow_tiny_test_catalog(monkeypatch: pytest.MonkeyPatch, source: str = "llm_stats") -> None:
     monkeypatch.setattr(hf_dataset, "MIN_CATALOG_RECORDS", 1)
-    monkeypatch.setattr(hf_dataset, "REQUIRED_CATALOG_SOURCES", frozenset({"llm_stats"}))
+    monkeypatch.setattr(hf_dataset, "REQUIRED_CATALOG_SOURCES", frozenset({source}))
+
+
+def _score_row(**overrides) -> dict:
+    row = {
+        "key": "test:bench",
+        "source": "llm_stats",
+        "obs_id": "score:test:1",
+        "model_id": "model:test",
+        "model_name": "Test model",
+        "raw_value": "1.0",
+        "value": 1.0,
+        "value_kind": "number",
+        "source_url": "https://example.com/score",
+    }
+    row.update(overrides)
+    return row
 
 
 def test_generate_dataset_card():
@@ -59,7 +86,6 @@ def test_generate_dataset_card():
     )
     assert card.startswith("---\n")
     assert "configs:" in card
-    assert "config_name: default" in card
     assert "config_name: catalog" in card
     assert "config_name: scores" in card
     assert "config_name: radar_artifacts" in card
@@ -70,6 +96,16 @@ def test_generate_dataset_card():
     assert "license: other" in card
     assert "license: apache-2.0" not in card
     assert "LICENSE-CONTENT.md" in card
+    frontmatter = yaml.safe_load(card.split("---", 2)[1])
+    assert [config["config_name"] for config in frontmatter["configs"]] == [
+        "catalog",
+        "scores",
+        "radar_artifacts",
+        "radar_observations",
+    ]
+    assert frontmatter["configs"][0]["default"] is True
+    assert "(`self_reported`, `third_party`)" in card
+    assert "(`discovered`, `released`, `updated`)" in card
 
 
 def test_export_hf_dataset(tmp_path: Path):
@@ -111,6 +147,9 @@ def test_export_hf_dataset(tmp_path: Path):
     with (data_dir / "scores.jsonl").open(encoding="utf-8") as f:
         score_lines = [json.loads(line) for line in f]
     assert len(score_lines) == result.scores_count
+    assert sum(row["score_count"] for row in catalog_lines) == result.scores_count
+    assert all(row.get("source") for row in score_lines)
+    assert len({row["obs_id"] for row in score_lines}) == result.scores_count
     first_score = score_lines[0]
     assert "key" in first_score
     assert "model_name" in first_score
@@ -238,4 +277,134 @@ def test_export_hf_dataset_rejects_truncated_catalog(tmp_path: Path):
     custom_paths = _write_catalog(tmp_path, shard_key="test:bench")
 
     with pytest.raises(ValueError, match="expected at least 1259"):
+        export_hf_dataset(output_dir=tmp_path / "hf_dataset", paths=custom_paths)
+
+
+def test_export_hf_dataset_rejects_score_count_mismatch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    custom_paths = _write_catalog(
+        tmp_path,
+        shard_key="test:bench",
+        score_count=1,
+        score_rows=[],
+    )
+    _allow_tiny_test_catalog(monkeypatch)
+
+    with pytest.raises(ValueError, match="has 0 score rows; index declares 1"):
+        export_hf_dataset(output_dir=tmp_path / "hf_dataset", paths=custom_paths)
+
+
+def test_export_hf_dataset_rejects_score_for_another_benchmark(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    custom_paths = _write_catalog(
+        tmp_path,
+        shard_key="test:bench",
+        score_count=1,
+        score_rows=[{"key": "test:other"}],
+    )
+    _allow_tiny_test_catalog(monkeypatch)
+
+    with pytest.raises(ValueError, match="contains a score for 'test:other'"):
+        export_hf_dataset(output_dir=tmp_path / "hf_dataset", paths=custom_paths)
+
+
+def test_export_hf_dataset_rejects_misattributed_score_source(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    custom_paths = _write_catalog(
+        tmp_path,
+        shard_key="test:bench",
+        score_count=1,
+        score_rows=[_score_row(source="artificial_analysis")],
+    )
+    _allow_tiny_test_catalog(monkeypatch)
+
+    with pytest.raises(ValueError, match="does not match bucket 'llm_stats'"):
+        export_hf_dataset(output_dir=tmp_path / "hf_dataset", paths=custom_paths)
+
+
+def test_export_hf_dataset_rejects_score_bucket_from_another_catalog_source(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    custom_paths = _write_catalog(
+        tmp_path,
+        shard_key="test:bench",
+        catalog_source="artificial_analysis",
+        score_count=1,
+        score_rows=[_score_row()],
+    )
+    _allow_tiny_test_catalog(monkeypatch, source="artificial_analysis")
+
+    with pytest.raises(ValueError, match="catalog source 'artificial_analysis'"):
+        export_hf_dataset(output_dir=tmp_path / "hf_dataset", paths=custom_paths)
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        ({"model_name": ""}, "score model_name must be a non-empty string"),
+        ({"value": True}, "score value must be numeric"),
+    ],
+)
+def test_export_hf_dataset_rejects_malformed_score_rows(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    overrides: dict,
+    message: str,
+):
+    custom_paths = _write_catalog(
+        tmp_path,
+        shard_key="test:bench",
+        score_count=1,
+        score_rows=[_score_row(**overrides)],
+    )
+    _allow_tiny_test_catalog(monkeypatch)
+
+    with pytest.raises(ValueError, match=message):
+        export_hf_dataset(output_dir=tmp_path / "hf_dataset", paths=custom_paths)
+
+
+def test_export_hf_dataset_rejects_duplicate_score_ids(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    custom_paths = _write_catalog(
+        tmp_path,
+        shard_key="test:bench",
+        score_count=2,
+        score_rows=[_score_row(), _score_row(model_id="model:other")],
+    )
+    _allow_tiny_test_catalog(monkeypatch)
+
+    with pytest.raises(ValueError, match="Duplicate score observation ID 'score:test:1'"):
+        export_hf_dataset(output_dir=tmp_path / "hf_dataset", paths=custom_paths)
+
+
+def test_export_hf_dataset_rejects_duplicate_score_ids_across_shards(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    custom_paths = _write_catalog(
+        tmp_path,
+        shard_key="test:bench",
+        score_count=1,
+        score_rows=[_score_row()],
+    )
+    index = json.loads(custom_paths.index.read_text(encoding="utf-8"))
+    second_benchmark = {**index["benchmarks"][0], "key": "test:other", "slug": "test-other"}
+    index["count"] = 2
+    index["benchmarks"].append(second_benchmark)
+    custom_paths.index.write_text(json.dumps(index), encoding="utf-8")
+    (custom_paths.shards / "test-other.json").write_text(
+        json.dumps(
+            {
+                "record": {"key": "test:other"},
+                "scores_by_source": {"llm_stats": {"rows": [_score_row(key="test:other")]}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    _allow_tiny_test_catalog(monkeypatch)
+
+    with pytest.raises(ValueError, match="Duplicate score observation ID 'score:test:1'"):
         export_hf_dataset(output_dir=tmp_path / "hf_dataset", paths=custom_paths)

@@ -184,10 +184,10 @@ jobs:
       - name: Install pinned Hugging Face client
         run: python -m pip install 'huggingface_hub==1.31.0'
       - name: Sync to Hugging Face Hub
-        if: env.HF_TOKEN != ''
+        if: github.ref == 'refs/heads/main'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_REPO_ID: ${{ vars.HF_DATASET_REPO || 'ktwu01/benchmark-radar' }}
+          HF_REPO_ID: ktwu01/benchmark-radar
         run: |
           python -c '
           import os
@@ -196,6 +196,8 @@ jobs:
 
           token = os.environ["HF_TOKEN"]
           repo_id = os.environ["HF_REPO_ID"]
+          if not token:
+              raise RuntimeError("HF_TOKEN repository secret is not configured")
           api = HfApi(token=token)
 
           api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True, private=False)
@@ -204,7 +206,7 @@ jobs:
               repo_id=repo_id,
               repo_type="dataset",
               commit_message="Automated daily sync from Benchmark Radar CI",
-              delete_patterns="*",
+              delete_patterns=["data/*", "manifest.json"],
           )
           print(f"Successfully synced dataset to https://huggingface.co/datasets/{repo_id}")
           '

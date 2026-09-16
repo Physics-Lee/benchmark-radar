@@ -116,3 +116,46 @@ def test_export_hf_dataset_rejects_key_mismatch(tmp_path: Path):
     custom_paths = QueryPaths(index=index_file, shards=shards_dir)
     with pytest.raises(ValueError, match="key mismatch"):
         export_hf_dataset(output_dir=output_dir, paths=custom_paths)
+
+
+def test_export_hf_dataset_rejects_empty_index(tmp_path: Path):
+    import pytest
+
+    output_dir = tmp_path / "hf_dataset"
+    index_file = tmp_path / "index.json"
+    shards_dir = tmp_path / "shards"
+    shards_dir.mkdir(parents=True, exist_ok=True)
+    index_file.write_text(
+        json.dumps({"benchmarks": []}),
+        encoding="utf-8",
+    )
+
+    custom_paths = QueryPaths(index=index_file, shards=shards_dir)
+    with pytest.raises(ValueError, match="contains no benchmarks"):
+        export_hf_dataset(output_dir=output_dir, paths=custom_paths)
+
+
+def test_export_hf_dataset_binds_radar_to_custom_paths(tmp_path: Path):
+    import pytest
+
+    output_dir = tmp_path / "hf_dataset"
+    custom_dir = tmp_path / "custom_site"
+    custom_dir.mkdir(parents=True, exist_ok=True)
+    index_file = custom_dir / "benchmark-index.json"
+    shards_dir = custom_dir / "benchmarks"
+    shards_dir.mkdir(parents=True, exist_ok=True)
+
+    index_file.write_text(
+        json.dumps({"benchmarks": [{"slug": "b1", "key": "test:b1"}]}),
+        encoding="utf-8",
+    )
+    shard_file = shards_dir / "b1.json"
+    shard_file.write_text(
+        json.dumps({"record": {"key": "test:b1"}}),
+        encoding="utf-8",
+    )
+
+    custom_paths = QueryPaths(index=index_file, shards=shards_dir)
+    # Expected radar_file at custom_dir / "radar.json", which does not exist
+    with pytest.raises(FileNotFoundError, match="Radar corpus missing at .*custom_site/radar.json"):
+        export_hf_dataset(output_dir=output_dir, paths=custom_paths)

@@ -232,14 +232,19 @@ def export_hf_dataset(
     data_dir = output_dir / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
 
-    # 1. Load catalog index and validate shard existence and key matching
+    # 1. Load catalog index and validate full population
     if not resolved_paths.index.exists():
         raise FileNotFoundError(
             f"Catalog index missing at {resolved_paths.index}; "
             "run `benchmark-radar normalize-catalog` first."
         )
     index_data = json.loads(resolved_paths.index.read_text(encoding="utf-8"))
-    benchmarks = index_data.get("benchmarks", [])
+    benchmarks = index_data.get("benchmarks")
+    if not isinstance(benchmarks, list) or len(benchmarks) == 0:
+        raise ValueError(
+            f"Catalog index at {resolved_paths.index} contains no benchmarks; "
+            "investigate corpus reduction."
+        )
 
     # 2. Extract catalog & scores with strict shard validation
     catalog_rows = []
@@ -306,7 +311,7 @@ def export_hf_dataset(
         )
 
     # 3. Extract radar artifacts & observations from radar corpus
-    radar_file = radar_path or Path("site/data/radar.json")
+    radar_file = radar_path or (resolved_paths.index.parent / "radar.json")
     if not radar_file.exists():
         raise FileNotFoundError(
             f"Radar corpus missing at {radar_file}; run `benchmark-radar classify` first."

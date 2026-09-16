@@ -77,6 +77,39 @@ def _score_row(**overrides) -> dict:
     return row
 
 
+def _write_minimal_radar(root: Path) -> None:
+    payload_hash = "sha256:" + "a" * 64
+    corpus = {
+        "schema_version": 1,
+        "entity_count": 1,
+        "observation_count": 1,
+        "edge_count": 0,
+        "entities": [
+            {
+                "id": "artifact:test",
+                "type": "artifact",
+                "url": "https://example.com/artifact",
+                "parser_versions": ["test/1"],
+                "raw_payload_hashes": [payload_hash],
+            }
+        ],
+        "observations": [
+            {
+                "id": "observation:test",
+                "entity_id": "artifact:test",
+                "url": "https://example.com/observation",
+                "published_at": "2026-09-15T00:00:00Z",
+                "retrieved_at": "2026-09-15T00:00:00Z",
+                "parser_version": "test/1",
+                "raw_payload_hash": payload_hash,
+            }
+        ],
+        "edges": [],
+        "aggregates": {"entity_types": {"artifact": 1}},
+    }
+    (root / "radar.json").write_text(json.dumps({"corpus": corpus}), encoding="utf-8")
+
+
 def test_generate_dataset_card():
     card = generate_dataset_card(
         catalog_count=1284,
@@ -344,6 +377,7 @@ def test_export_hf_dataset_rejects_score_bucket_from_another_catalog_source(
 @pytest.mark.parametrize(
     ("overrides", "message"),
     [
+        ({"model_id": ""}, "score model_id must be null or a non-empty string"),
         ({"model_name": ""}, "score model_name must be a non-empty string"),
         ({"value": True}, "score value must be numeric"),
     ],
@@ -364,6 +398,26 @@ def test_export_hf_dataset_rejects_malformed_score_rows(
 
     with pytest.raises(ValueError, match=message):
         export_hf_dataset(output_dir=tmp_path / "hf_dataset", paths=custom_paths)
+
+
+def test_export_hf_dataset_preserves_score_with_unknown_model_id(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    custom_paths = _write_catalog(
+        tmp_path,
+        shard_key="test:bench",
+        score_count=1,
+        score_rows=[_score_row(model_id=None)],
+    )
+    _write_minimal_radar(tmp_path)
+    _allow_tiny_test_catalog(monkeypatch)
+
+    export_hf_dataset(output_dir=tmp_path / "hf_dataset", paths=custom_paths)
+
+    score = json.loads(
+        (tmp_path / "hf_dataset" / "data" / "scores.jsonl").read_text(encoding="utf-8").strip()
+    )
+    assert score["model_id"] is None
 
 
 def test_export_hf_dataset_rejects_duplicate_score_ids(

@@ -151,7 +151,7 @@ Contains {catalog_count:,} normalized benchmark records.
 Contains {scores_count:,} reported evaluation score observations across 870+ frontier models.
 - `obs_id`: Unique observation identifier
 - `key`: Benchmark key
-- `model_id`: Source-specific stable model identifier
+- `model_id`: Source-specific stable model identifier, or null when the source does not provide one
 - `model_name`: Model display name
 - `organization`: Model creator/lab (e.g. `DeepSeek`, `OpenAI`, `Anthropic`, `Google`, `Meta`)
 - `value`: Numeric reported score
@@ -314,7 +314,6 @@ def export_hf_dataset(
                     )
                 for field in (
                     "obs_id",
-                    "model_id",
                     "model_name",
                     "raw_value",
                     "value_kind",
@@ -324,6 +323,14 @@ def export_hf_dataset(
                         raise ValueError(
                             f"Detail shard {shard_path} score {field} must be a non-empty string"
                         )
+                model_id = row.get("model_id")
+                if "model_id" not in row or (
+                    model_id is not None and (not isinstance(model_id, str) or not model_id.strip())
+                ):
+                    raise ValueError(
+                        f"Detail shard {shard_path} score model_id must be null or a "
+                        "non-empty string"
+                    )
                 if isinstance(row.get("value"), bool) or not isinstance(
                     row.get("value"), (int, float)
                 ):

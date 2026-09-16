@@ -99,7 +99,13 @@ _RULES: Final[dict[str, dict[str, tuple[str, ...]]]] = {
             r"seeg\b",
             r"utah array",
             r"eeg\b",
-            r"meg\b",
+            # Bare "MEG" is not safe as an acronym: the corpus carries an
+            # AI-evaluation initiative whose name is also MEG ("meg-
+            # initiative/meg-inspect-eval", Codex round 2). The abbreviation
+            # only counts next to a recording/data word; the full technique
+            # name below carries the rest.
+            r"meg[-/ ](?:eeg|data|recording|recordings|signals?|sources?|stud(?:y|ies)|"
+            r"systems?|sensors?)",
             r"ecog\b",
             r"fmri\b",
             # Full technique names behind the acronyms above. The bare stem
@@ -113,7 +119,11 @@ _RULES: Final[dict[str, dict[str, tuple[str, ...]]]] = {
             r"encephalograph",
             r"neural decoding",
             r"neural encoding",
-            r"neural signal",
+            # Plural only: neuroscience writes "decoding neural signals",
+            # while the metaphorical estimator sense ("the model's neural
+            # signal is volatility filtering in disguise", a GARCH finance
+            # record, Codex round 2) is singular.
+            r"neural signals\b",
             r"neural activity",
             # Spiking in biological tissue, not the SNN/neuromorphic
             # architecture sense: "spiking neural networks" and
@@ -137,6 +147,11 @@ _RULES: Final[dict[str, dict[str, tuple[str, ...]]]] = {
             r"intracranial",
             r"calcium imaging",
             r"optogenetic",
+            # Cardiac electrophysiology is the other big user of this stem
+            # ("cardiology, electrophysiology, ECG waveforms", Codex round
+            # 2); the cardiac-side words veto rather than compete, so an
+            # EEG record that merely mentions removing ECG artifacts keeps
+            # its tag.
             r"electrophysiolog",
         ),
         # "blood-brain barrier": auto-generated PathMap hypothesis records
@@ -155,12 +170,19 @@ _RULES: Final[dict[str, dict[str, tuple[str, ...]]]] = {
         # without being neuroscience; genus/species novelty is the paper-
         # genre marker that separates it, the same genre-marker pattern the
         # main taxonomy uses for surveys (Codex review, PR #647).
+        # "electrocardiograph" / "cardiolog" / "cardiac electrophysiolog":
+        # the cardiac side of electrophysiology (ECGQuest, Codex round 2).
+        # Scoped to cardiology words rather than bare "ECG" so EEG records
+        # that mention removing ECG artifacts are unaffected.
         "exclude": (
             r"blood[- ]brain barrier",
             r"as the brain of",
             r"brain[- ]inspired",
             r"brain[- ]like",
             r"(?:sp|spp|gen)\. nov",
+            r"electrocardiograph",
+            r"cardiolog",
+            r"cardiac electrophysiolog",
         ),
     },
 }

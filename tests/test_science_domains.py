@@ -142,11 +142,50 @@ def test_neural_network_papers_are_not_tagged():
 
 
 def test_acronym_terms_are_word_anchored():
-    # "meg" as a standalone word is magnetoencephalography and should
-    # tag; only compound words like megabyte/megapixel must not.
+    # Only compound words like megabyte/megapixel are closed out here;
+    # the acronym-vs-project disambiguation has its own test below.
     assert derive_science_domains("Training megabyte-scale models efficiently") == []
     assert derive_science_domains("Streaming megapixel video datasets") == []
     assert derive_science_domains("A MEG study of cortical oscillations") == ["neuroscience"]
+
+
+def test_meg_acronym_requires_a_recording_collocate():
+    # Codex round 2: "meg-initiative/meg-inspect-eval" is an AI-evaluation
+    # package, not magnetoencephalography, so bare MEG no longer tags.
+    assert (
+        derive_science_domains(
+            "meg-initiative/meg-inspect-eval",
+            "Executable Inspect AI evaluation package for MEG behavioral and safety metrics.",
+        )
+        == []
+    )
+    # The real sense sits next to recording/data words (LibriBrain100
+    # says "Broad and Deep MEG Data").
+    assert derive_science_domains("LibriBrain100: MEG Data for Decoding") == ["neuroscience"]
+    assert derive_science_domains("Source localization with MEG recordings") == ["neuroscience"]
+
+
+def test_cardiac_and_metaphorical_senses_do_not_tag():
+    # Codex round 2: cardiac electrophysiology is the other big user of
+    # the stem, and the estimator metaphor uses singular "neural signal".
+    assert (
+        derive_science_domains(
+            "ECGQuest: Benchmarking Language Models for Electrocardiography",
+            "Interpretation requires cardiology, electrophysiology, and ECG waveform knowledge.",
+        )
+        == []
+    )
+    assert (
+        derive_science_domains(
+            "Does Machine Learning Beat the GARCH Benchmark?",
+            "The model's neural signal is volatility filtering in disguise.",
+        )
+        == []
+    )
+    # Plural neural signals is the neuroscience sense; an EEG record that
+    # merely mentions ECG artifacts keeps its tag.
+    assert derive_science_domains("Decoding of neural signals during speech") == ["neuroscience"]
+    assert derive_science_domains("EEG preprocessing with ECG artifact removal") == ["neuroscience"]
 
 
 def test_architecture_prose_does_not_tag():

@@ -135,6 +135,12 @@ def main() -> None:
         help="Output directory for the Hugging Face dataset export.",
     )
     parser.add_argument(
+        "--hf-radar-path",
+        type=Path,
+        default=None,
+        help="Explicit path to radar.json for Hugging Face dataset export.",
+    )
+    parser.add_argument(
         "--author-output",
         type=Path,
         default=Path("out/benchmark-authors.json"),
@@ -500,7 +506,11 @@ def main() -> None:
         from .hf_dataset import export_hf_dataset
         from .query import QueryPaths
 
-        res = export_hf_dataset(output_dir=args.hf_output_dir, paths=QueryPaths())
+        res = export_hf_dataset(
+            output_dir=args.hf_output_dir,
+            paths=QueryPaths(),
+            radar_path=args.hf_radar_path,
+        )
         print(
             f"Hugging Face dataset exported to {res.export_dir}:\n"
             f"  - catalog: {res.catalog_count} benchmarks\n"

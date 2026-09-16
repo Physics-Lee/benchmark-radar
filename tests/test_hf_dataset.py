@@ -77,3 +77,42 @@ def test_export_hf_dataset(tmp_path: Path):
     readme_text = (output_dir / "README.md").read_text(encoding="utf-8")
     frontmatter_match = re.search(r"^---\n(.*?)\n---", readme_text, re.DOTALL)
     assert frontmatter_match is not None
+
+
+def test_export_hf_dataset_rejects_missing_shard(tmp_path: Path):
+    import pytest
+
+    output_dir = tmp_path / "hf_dataset"
+    index_file = tmp_path / "index.json"
+    shards_dir = tmp_path / "shards"
+    shards_dir.mkdir(parents=True, exist_ok=True)
+    index_file.write_text(
+        json.dumps({"benchmarks": [{"slug": "missing-bench", "key": "test:bench"}]}),
+        encoding="utf-8",
+    )
+
+    custom_paths = QueryPaths(index=index_file, shards=shards_dir)
+    with pytest.raises(FileNotFoundError, match="Benchmark detail shard missing"):
+        export_hf_dataset(output_dir=output_dir, paths=custom_paths)
+
+
+def test_export_hf_dataset_rejects_key_mismatch(tmp_path: Path):
+    import pytest
+
+    output_dir = tmp_path / "hf_dataset"
+    index_file = tmp_path / "index.json"
+    shards_dir = tmp_path / "shards"
+    shards_dir.mkdir(parents=True, exist_ok=True)
+    index_file.write_text(
+        json.dumps({"benchmarks": [{"slug": "bench-1", "key": "expected:key"}]}),
+        encoding="utf-8",
+    )
+    shard_file = shards_dir / "bench-1.json"
+    shard_file.write_text(
+        json.dumps({"record": {"key": "mismatched:key"}}),
+        encoding="utf-8",
+    )
+
+    custom_paths = QueryPaths(index=index_file, shards=shards_dir)
+    with pytest.raises(ValueError, match="key mismatch"):
+        export_hf_dataset(output_dir=output_dir, paths=custom_paths)

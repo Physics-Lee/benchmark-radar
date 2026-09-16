@@ -215,6 +215,7 @@ Contains {observations_count:,} discrete daily discovery events.
 def export_hf_dataset(
     output_dir: Path = DEFAULT_EXPORT_DIR,
     paths: QueryPaths | None = None,
+    radar_path: Path | None = None,
 ) -> DatasetExportResult:
     """Export the benchmark catalog, scores, and radar snapshots to JSONL format.
 
@@ -231,7 +232,7 @@ def export_hf_dataset(
     data_dir = output_dir / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
 
-    # 1. Load catalog index
+    # 1. Load catalog index and validate shard existence and key matching
     if not resolved_paths.index.exists():
         raise FileNotFoundError(
             f"Catalog index missing at {resolved_paths.index}; "
@@ -240,20 +241,31 @@ def export_hf_dataset(
     index_data = json.loads(resolved_paths.index.read_text(encoding="utf-8"))
     benchmarks = index_data.get("benchmarks", [])
 
-    # 2. Extract catalog & scores
+    # 2. Extract catalog & scores with strict shard validation
     catalog_rows = []
     score_rows = []
 
     for b in benchmarks:
         slug = b.get("slug", "")
+        key = b.get("key")
         shard_path = resolved_paths.shards / f"{slug}.json"
-        artifacts = []
-        if shard_path.exists():
-            shard = json.loads(shard_path.read_text(encoding="utf-8"))
-            artifacts = shard.get("record", {}).get("artifacts", [])
-            for _src, src_data in shard.get("scores_by_source", {}).items():
-                for r in src_data.get("rows", []):
-                    score_rows.append(r)
+        if not shard_path.exists():
+            raise FileNotFoundError(
+                f"Benchmark detail shard missing at {shard_path} for key {key!r}; "
+                "run `benchmark-radar normalize-catalog` first."
+            )
+        shard = json.loads(shard_path.read_text(encoding="utf-8"))
+        shard_record = shard.get("record")
+        if not isinstance(shard_record, dict) or shard_record.get("key") != key:
+            actual_key = shard_record.get("key") if isinstance(shard_record, dict) else None
+            raise ValueError(
+                f"Detail shard {shard_path} key mismatch: expected {key!r}, got {actual_key!r}"
+            )
+
+        artifacts = shard_record.get("artifacts", [])
+        for _src, src_data in shard.get("scores_by_source", {}).items():
+            for r in src_data.get("rows", []):
+                score_rows.append(r)
 
         paper_url = next(
             (a["url"] for a in artifacts if a.get("kind") == "paper"),
@@ -293,15 +305,25 @@ def export_hf_dataset(
             }
         )
 
-    # 3. Extract radar artifacts & observations from radar.json
-    radar_path = Path("site/data/radar.json")
-    artifact_rows = []
-    observation_rows = []
-    if radar_path.exists():
-        radar_data = json.loads(radar_path.read_text(encoding="utf-8"))
+    # 3. Extract radar artifacts & observations from provided radar file or snapshots
+    effective_radar_path = radar_path or Path("site/data/radar.json")
+    if effective_radar_path.exists():
+        radar_data = json.loads(effective_radar_path.read_text(encoding="utf-8"))
         corpus = radar_data.get("corpus", {})
-        artifact_rows = [e for e in corpus.get("entities", []) if e.get("type") == "artifact"]
-        observation_rows = corpus.get("observations", [])
+    elif resolved_paths.snapshots.exists():
+        from .snapshots import dashboard_data, load_snapshots
+
+        snapshots = load_snapshots(resolved_paths.snapshots)
+        dash = dashboard_data(snapshots)
+        corpus = dash.get("corpus", {})
+    else:
+        raise FileNotFoundError(
+            f"Neither radar file ({effective_radar_path}) nor snapshot directory "
+            f"({resolved_paths.snapshots}) exists; run `benchmark-radar classify` first."
+        )
+
+    artifact_rows = [e for e in corpus.get("entities", []) if e.get("type") == "artifact"]
+    observation_rows = corpus.get("observations", [])
 
     # 4. Write JSONL files
     catalog_file = data_dir / "catalog.jsonl"

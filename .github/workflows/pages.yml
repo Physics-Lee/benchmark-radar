@@ -181,13 +181,14 @@ jobs:
         with:
           name: hf-dataset-release
           path: hf-dataset-release
+      - name: Install pinned Hugging Face client
+        run: python -m pip install 'huggingface_hub==1.31.0'
       - name: Sync to Hugging Face Hub
         if: env.HF_TOKEN != ''
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_REPO_ID: ${{ vars.HF_DATASET_REPO || 'ktwu01/benchmark-radar' }}
         run: |
-          pip install huggingface_hub
           python -c '
           import os
           from pathlib import Path
@@ -203,6 +204,7 @@ jobs:
               repo_id=repo_id,
               repo_type="dataset",
               commit_message="Automated daily sync from Benchmark Radar CI",
+              delete_patterns="*",
           )
           print(f"Successfully synced dataset to https://huggingface.co/datasets/{repo_id}")
           '

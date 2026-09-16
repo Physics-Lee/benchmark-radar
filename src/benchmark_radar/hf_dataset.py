@@ -14,9 +14,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .query import QueryPaths
+from .corpus import CorpusError, validate_corpus
+from .query import QueryPaths, QueryService
 
 DEFAULT_EXPORT_DIR = Path("site/data/hf_dataset")
+MIN_CATALOG_RECORDS = 1259
+REQUIRED_CATALOG_SOURCES = frozenset(
+    {"artificial_analysis", "llm_stats", "model_reports", "opencompass_hub"}
+)
 
 
 @dataclass
@@ -38,7 +43,9 @@ def generate_dataset_card(
 ) -> str:
     """Generate Hugging Face Dataset Card README.md with YAML frontmatter."""
     card = f"""---
-license: apache-2.0
+license: other
+license_name: benchmark-radar-mixed-terms
+license_link: https://github.com/ktwu01/benchmark-radar/blob/main/LICENSE-CONTENT.md
 task_categories:
   - text-generation
   - question-answering
@@ -197,6 +204,15 @@ Contains {observations_count:,} discrete daily discovery events.
   or technical report.
 - **Daily Automated Sync**: Radar discoveries are refreshed daily at 05:00 UTC via GitHub Actions.
 
+## Licensing
+
+The technical report and Benchmark Radar's original editorial content are
+available under CC BY-NC-SA 4.0. Commercial dataset packaging or product
+integration requires prior written permission. Third-party benchmark metadata
+and source material retain their original terms. Review the
+[repository licensing notice](https://github.com/ktwu01/benchmark-radar/blob/main/LICENSE-CONTENT.md)
+before reuse, especially for commercial dataset packaging.
+
 ## Citation
 
 ```bibtex
@@ -232,18 +248,25 @@ def export_hf_dataset(
     data_dir = output_dir / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
 
-    # 1. Load catalog index and validate full population
-    if not resolved_paths.index.exists():
-        raise FileNotFoundError(
-            f"Catalog index missing at {resolved_paths.index}; "
-            "run `benchmark-radar normalize-catalog` first."
-        )
-    index_data = json.loads(resolved_paths.index.read_text(encoding="utf-8"))
-    benchmarks = index_data.get("benchmarks")
-    if not isinstance(benchmarks, list) or len(benchmarks) == 0:
+    # 1. Load the catalog through the shared query contract so the export cannot
+    # bypass index schema, identity, count, or detail-shard validation.
+    index_data = QueryService(resolved_paths).validated_catalog_index()
+    benchmarks = index_data["benchmarks"]
+    if not benchmarks:
         raise ValueError(
             f"Catalog index at {resolved_paths.index} contains no benchmarks; "
             "investigate corpus reduction."
+        )
+    if len(benchmarks) < MIN_CATALOG_RECORDS:
+        raise ValueError(
+            f"Catalog index at {resolved_paths.index} contains only {len(benchmarks)} "
+            f"benchmarks; expected at least {MIN_CATALOG_RECORDS}. Investigate corpus reduction."
+        )
+    sources = {benchmark["source"] for benchmark in benchmarks}
+    missing_sources = sorted(REQUIRED_CATALOG_SOURCES - sources)
+    if missing_sources:
+        raise ValueError(
+            "Catalog index is missing required source families: " + ", ".join(missing_sources)
         )
 
     # 2. Extract catalog & scores with strict shard validation
@@ -305,7 +328,7 @@ def export_hf_dataset(
                 "document_count": (b.get("evidence_summary") or {}).get("document_count", 0),
                 "model_count": (b.get("evidence_summary") or {}).get("model_count"),
                 "score_count": b.get("score_count", 0),
-                "highest_score": (b.get("score_summary") or {}).get("observed_max"),
+                "highest_score": (b.get("score_summary") or {}).get("raw_max"),
                 "score_unit": b.get("unit"),
             }
         )
@@ -317,10 +340,33 @@ def export_hf_dataset(
             f"Radar corpus missing at {radar_file}; run `benchmark-radar classify` first."
         )
     radar_data = json.loads(radar_file.read_text(encoding="utf-8"))
-    corpus = radar_data.get("corpus", {})
-
-    artifact_rows = [e for e in corpus.get("entities", []) if e.get("type") == "artifact"]
-    observation_rows = corpus.get("observations", [])
+    if not isinstance(radar_data, dict):
+        raise CorpusError("radar data must be an object")
+    corpus = radar_data.get("corpus")
+    if not isinstance(corpus, dict):
+        raise CorpusError("radar corpus must be an object")
+    for field in ("entities", "observations", "edges"):
+        rows = corpus.get(field)
+        if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
+            raise CorpusError(f"radar corpus {field} must be an array of objects")
+    validate_corpus(corpus)
+    entities = corpus["entities"]
+    observation_rows = corpus["observations"]
+    if corpus.get("entity_count") != len(entities):
+        raise CorpusError("radar corpus entity_count does not match its entities")
+    if corpus.get("observation_count") != len(observation_rows):
+        raise CorpusError("radar corpus observation_count does not match its observations")
+    if corpus.get("edge_count") != len(corpus["edges"]):
+        raise CorpusError("radar corpus edge_count does not match its edges")
+    artifact_rows = [entity for entity in entities if entity.get("type") == "artifact"]
+    aggregates = corpus.get("aggregates")
+    if not isinstance(aggregates, dict) or not isinstance(aggregates.get("entity_types"), dict):
+        raise CorpusError("radar corpus aggregates.entity_types must be an object")
+    entity_types = aggregates["entity_types"]
+    if entity_types.get("artifact") != len(artifact_rows):
+        raise CorpusError("radar corpus artifact count does not match its entities")
+    if not artifact_rows or not observation_rows:
+        raise CorpusError("radar corpus must contain artifacts and observations")
 
     # 4. Write JSONL files
     catalog_file = data_dir / "catalog.jsonl"

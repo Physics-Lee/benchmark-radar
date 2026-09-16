@@ -251,13 +251,13 @@ def export_hf_dataset(
         shard_path = resolved_paths.shards / f"{slug}.json"
         if not shard_path.exists():
             raise FileNotFoundError(
-                f"Benchmark detail shard missing at {shard_path} for key {key!r}; "
+                f"Detail shard missing at {shard_path} for key {key!r}; "
                 "run `benchmark-radar normalize-catalog` first."
             )
         shard = json.loads(shard_path.read_text(encoding="utf-8"))
-        shard_record = shard.get("record")
-        if not isinstance(shard_record, dict) or shard_record.get("key") != key:
-            actual_key = shard_record.get("key") if isinstance(shard_record, dict) else None
+        shard_record = shard.get("record") or {}
+        actual_key = shard_record.get("key")
+        if actual_key != key:
             raise ValueError(
                 f"Detail shard {shard_path} key mismatch: expected {key!r}, got {actual_key!r}"
             )
@@ -305,22 +305,14 @@ def export_hf_dataset(
             }
         )
 
-    # 3. Extract radar artifacts & observations from provided radar file or snapshots
-    effective_radar_path = radar_path or Path("site/data/radar.json")
-    if effective_radar_path.exists():
-        radar_data = json.loads(effective_radar_path.read_text(encoding="utf-8"))
-        corpus = radar_data.get("corpus", {})
-    elif resolved_paths.snapshots.exists():
-        from .snapshots import dashboard_data, load_snapshots
-
-        snapshots = load_snapshots(resolved_paths.snapshots)
-        dash = dashboard_data(snapshots)
-        corpus = dash.get("corpus", {})
-    else:
+    # 3. Extract radar artifacts & observations from radar corpus
+    radar_file = radar_path or Path("site/data/radar.json")
+    if not radar_file.exists():
         raise FileNotFoundError(
-            f"Neither radar file ({effective_radar_path}) nor snapshot directory "
-            f"({resolved_paths.snapshots}) exists; run `benchmark-radar classify` first."
+            f"Radar corpus missing at {radar_file}; run `benchmark-radar classify` first."
         )
+    radar_data = json.loads(radar_file.read_text(encoding="utf-8"))
+    corpus = radar_data.get("corpus", {})
 
     artifact_rows = [e for e in corpus.get("entities", []) if e.get("type") == "artifact"]
     observation_rows = corpus.get("observations", [])

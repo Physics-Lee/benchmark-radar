@@ -92,7 +92,7 @@ def test_export_hf_dataset_rejects_missing_shard(tmp_path: Path):
     )
 
     custom_paths = QueryPaths(index=index_file, shards=shards_dir)
-    with pytest.raises(FileNotFoundError, match="Benchmark detail shard missing"):
+    with pytest.raises(FileNotFoundError, match="Detail shard missing"):
         export_hf_dataset(output_dir=output_dir, paths=custom_paths)
 
 

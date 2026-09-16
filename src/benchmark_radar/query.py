@@ -416,6 +416,12 @@ class QueryService:
         self._validated_shards = index["count"]
         return self._validated_shards
 
+    def validated_catalog_index(self) -> dict[str, Any]:
+        """Return the catalog index after validating its records and detail shards."""
+        index = self._load_index()
+        self._validate_detail_shards()
+        return index
+
     def _radar_candidates(self) -> list[dict[str, Any]]:
         latest_by_identity: dict[tuple[str, str], dict[str, Any]] = {}
         for snapshot in self._load_snapshots():

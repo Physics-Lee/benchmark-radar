@@ -90,13 +90,18 @@ Applies to `README*`, `docs/**`, `.github/ISSUE_TEMPLATE/**`, `site/**`,
 ## Branches and pull requests
 
 - Start from the latest `origin/main`, especially for a small edit. Run
-  `git fetch origin`, then branch with `git switch -c <branch> origin/main`, or
-  bring an existing branch forward with `git rebase origin/main`. Fetching is
-  enough, and it leaves local `main` untouched; do not check out or pull `main`
-  to do this. A one-line fix written on a stale base can carry old copies of
-  files someone else has since changed, and a stale submodule pointer silently
-  rolls the paper back to an earlier commit. Re-read the diff after a rebase,
-  before opening the PR.
+  `git fetch origin`, then branch with
+  `git switch --no-track -c <branch> origin/main`, or bring an existing branch
+  forward with `git rebase origin/main`. Fetching is enough, and it leaves local
+  `main` untouched; do not check out or pull `main` to do this. A one-line fix
+  written on a stale base can carry old copies of files someone else has since
+  changed, and a stale submodule pointer silently rolls the paper back to an
+  earlier commit. Re-read the diff after a rebase, before opening the PR.
+- Keep the `--no-track`, and set the upstream on the first push with
+  `git push -u origin <branch>`. Without it the new branch records `origin/main`
+  as its upstream, a later bare `git push` refuses because the two names differ,
+  and the first repair Git prints is `git push origin HEAD:main`, which would
+  put the task branch on `main`.
 - Keep work on the task branch. Update local or remote `main`, or merge a pull
   request, only when the user explicitly requests it. Creating or updating a PR
   does not authorize a merge.

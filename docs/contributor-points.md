@@ -26,11 +26,8 @@ This public ledger is rebuilt from GitHub once per day. Do not edit the totals b
 
 | Issue | Contributor | Deadline | Points |
 |---|---|---|---:|
-| [#589](https://github.com/ktwu01/benchmark-radar/issues/589) | @lazizbekravshanov | 2026-09-19T15:42:57+00:00 | 6 |
-| [#583](https://github.com/ktwu01/benchmark-radar/issues/583) | @lazizbekravshanov | 2026-09-19T15:42:58+00:00 | 3 |
-| [#545](https://github.com/ktwu01/benchmark-radar/issues/545) | @lazizbekravshanov | 2026-09-19T15:42:54+00:00 | 3 |
-| [#544](https://github.com/ktwu01/benchmark-radar/issues/544) | @lazizbekravshanov | 2026-09-19T15:42:52+00:00 | 3 |
-| [#530](https://github.com/ktwu01/benchmark-radar/issues/530) | @lazizbekravshanov | 2026-09-19T15:42:57+00:00 | 12 |
+| [#487](https://github.com/ktwu01/benchmark-radar/issues/487) | @bigdu332 | 2026-09-27T06:28:43+00:00 | 2 |
+| [#411](https://github.com/ktwu01/benchmark-radar/issues/411) | @a-green-hand-jack | 2026-09-26T10:16:20+00:00 | 3 |
 | [#380](https://github.com/ktwu01/benchmark-radar/issues/380) | @Jeffyaoliang | 2026-09-20T21:07:58+00:00 | 12 |
 
 ## Earned points / 得分记录

@@ -89,6 +89,13 @@ Applies to `README*`, `docs/**`, `.github/ISSUE_TEMPLATE/**`, `site/**`,
 
 ## Branches and pull requests
 
+- Start from an up-to-date `main`, especially for a small edit. Run
+  `git switch main && git pull --ff-only` and branch from there, rather than
+  from a branch you happened to have checked out. A one-line fix written on a
+  stale `main` can carry old copies of files someone else has since changed, and
+  a stale submodule pointer silently rolls the paper back to an earlier commit.
+  If a branch has fallen behind, rebase it on `origin/main` and re-read the diff
+  before opening the PR.
 - Keep work on the task branch. Update local or remote `main`, or merge a pull
   request, only when the user explicitly requests it. Creating or updating a PR
   does not authorize a merge.

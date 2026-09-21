@@ -106,7 +106,11 @@ _RULES: Final[dict[str, dict[str, tuple[str, ...]]]] = {
             # name below carries the rest.
             r"meg[-/ ](?:eeg|data|recording|recordings|signals?|sources?|stud(?:y|ies)|"
             r"systems?|sensors?)",
-            r"ecog\b",
+            # ECoG has the same collision: "ECOG performance status" is the
+            # oncology score (owner review, current-corpus audit). The
+            # abbreviation requires an electrophysiology collocate; the full
+            # name below carries the rest.
+            r"ecog[-/ ]?(?:eeg|signals?|recordings?|electrodes?|data|based)",
             r"fmri\b",
             # Full technique names behind the acronyms above. The bare stem
             # "encephalograph" cannot reach the two real technique names --
@@ -139,8 +143,9 @@ _RULES: Final[dict[str, dict[str, tuple[str, ...]]]] = {
             # every hit was a product name (Snowflake Cortex) or anatomy
             # (adrenal cortex), never brain cortex. The "cortic" stem still
             # reaches cortical / cortico- compounds, which is where real
-            # neuro records put the word.
-            r"cortic",
+            # neuro records put the word -- minus corticosteroids, the
+            # drug class (owner review: RISANCROHN, Hidradenitis).
+            r"cortic(?!oster)",
             # Brain-region stems that no product or other anatomy shares.
             r"hippocamp",
             r"prefrontal",
@@ -171,9 +176,33 @@ _RULES: Final[dict[str, dict[str, tuple[str, ...]]]] = {
         # genre marker that separates it, the same genre-marker pattern the
         # main taxonomy uses for surveys (Codex review, PR #647).
         # "electrocardiograph" / "cardiolog" / "cardiac electrophysiolog":
-        # the cardiac side of electrophysiology (ECGQuest, Codex round 2).
-        # Scoped to cardiology words rather than bare "ECG" so EEG records
-        # that mention removing ECG artifacts are unaffected.
+        # the cardiac side of electrophysiology (ECGQuest, Codex round
+        # 2). Scoped to cardiology words rather than bare "ECG" so EEG
+        # records that mention removing ECG artifacts are unaffected.
+        # "interventional electrophysiolog" / "catheter ablation": cardiac
+        # EP registries name the field without any cardiac word (owner
+        # review, current-corpus audit: the Bulgaria EP registry).
+        # "no new neuroscience": explicit disclaimers (owner review:
+        # FluctlightDB, "we claim no new neuroscience").
+        # "brain natriuretic peptide": BNP/NT-proBNP is the cardiac
+        # hormone whose historical expansion contains "brain" (owner
+        # review: the troponin POCT study).
+        # "brain targeting" / "brain delivery": pharma drug-delivery
+        # framing, not brain science (current-corpus audit: the cubosomes
+        # review).
+        # "brain accomplishes": the brain-as-energy-benchmark analogy for
+        # edge computing (current-corpus audit: "the biological brain
+        # accomplishes complex cognition on an exceptionally modest..."
+        # budget).
+        # "cortical bone/porosity/thickness" / "trabecular": orthopedics
+        # owns these cortex senses (current-corpus audit: fragility-
+        # fracture QMRI).
+        # "pathmap experiment": auto-generated hypothesis "datasets" whose
+        # prose names gut/lung-brain axes; the genre marker covers every
+        # one of them regardless of which axis phrase fired.
+        # "analytical method development": pharma QC reviews name neuro
+        # indications (piracetam for cortical myoclonus) without being
+        # neuroscience work.
         "exclude": (
             r"blood[- ]brain barrier",
             r"as the brain of",
@@ -183,6 +212,17 @@ _RULES: Final[dict[str, dict[str, tuple[str, ...]]]] = {
             r"electrocardiograph",
             r"cardiolog",
             r"cardiac electrophysiolog",
+            r"interventional electrophysiolog",
+            r"catheter ablation",
+            r"no new neuroscien",
+            r"brain natriuretic peptide",
+            r"brain targeting",
+            r"brain delivery",
+            r"brain accomplishes",
+            r"cortical (?:bone|porosity|thickness)",
+            r"trabecular",
+            r"pathmap experiment",
+            r"analytical method development",
         ),
     },
 }

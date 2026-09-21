@@ -188,6 +188,114 @@ def test_cardiac_and_metaphorical_senses_do_not_tag():
     assert derive_science_domains("EEG preprocessing with ECG artifact removal") == ["neuroscience"]
 
 
+def test_owner_review_false_positives_are_untagged():
+    # The three records named in the owner's review of this PR, quoted
+    # from the live corpus (2026-09-15/16 snapshots).
+    assert (
+        derive_science_domains(
+            "FluctlightDB: A Memory Model of Data for AI Agents",
+            "We claim no new neuroscience and no new transformer: a missing "
+            "layer of the data stack.",
+        )
+        == []
+    )
+    assert (
+        derive_science_domains(
+            "Real-World Effectiveness of Risankizumab in Refractory Crohn's Disease",
+            "Remission without systemic corticosteroids was assessed at weeks 8-12.",
+        )
+        == []
+    )
+    assert (
+        derive_science_domains(
+            "Preliminary comparative evaluation of an immunofluorescence point-of-care system",
+            "N-terminal pro-brain natriuretic peptide (NT-proBNP), D-dimer "
+            "and hs-CRP from serum samples.",
+        )
+        == []
+    )
+
+
+def test_current_corpus_audit_false_positives_are_untagged():
+    # Proactive audit of the 2026-09-15..20 window beyond the owner's
+    # three: five further classes found and closed with the same rules.
+    # "ECOG performance status" is the oncology score, not ECoG.
+    assert (
+        derive_science_domains(
+            "Clinical usability of an explainable AI decision support tool",
+            "Eastern cooperative oncology group performance status (ECOG PS) "
+            "and neutrophil-to-lymphocyte ratio.",
+        )
+        == []
+    )
+    # Cardiac EP registry that names the field without a cardiac word.
+    assert (
+        derive_science_domains(
+            "Interventional electrophysiology in Bulgaria in 2025",
+            "Data from the electronic registry of procedures.",
+        )
+        == []
+    )
+    # Pharma brain-delivery framing and the energy-budget brain analogy.
+    assert (
+        derive_science_domains(
+            "CUBOSOMES: A REVIEW",
+            "Advanced applications in cancer therapy, brain targeting, gene "
+            "delivery, and vaccines.",
+        )
+        == []
+    )
+    assert (
+        derive_science_domains(
+            "Where Should Agents Live? Energy-Memory Characterization",
+            "While the biological brain accomplishes complex cognition on an "
+            "exceptionally modest energy budget.",
+        )
+        == []
+    )
+    # Orthopedic cortex: bone porosity, not brain cortex.
+    assert (
+        derive_science_domains(
+            "Fragility fracture risk prediction using quantitative MRI",
+            "Parameters correlate with trabecular deterioration and cortical porosity beyond BMD.",
+        )
+        == []
+    )
+    # Auto-generated hypothesis datasets and pharma QC reviews, two more
+    # genre-marker classes from the audit sample.
+    assert (
+        derive_science_domains(
+            "Dataset: Neuroinflammatory astrocyte subtypes in the mouse brain",
+            "Gut-brain axis mediator to reduce microglia activation - PathMap Experiment #000127.",
+        )
+        == []
+    )
+    assert (
+        derive_science_domains(
+            "A REVIEW ON ANALYTICAL METHOD DEVELOPMENT AND VALIDATION OF PIRACETAM",
+            "Widely used for cognitive impairment, cortical myoclonus, and vertigo.",
+        )
+        == []
+    )
+
+
+def test_current_corpus_true_positives_stay_tagged():
+    # Same window, verified-true records that the new vetoes must not
+    # touch: an EEG-workload study (EEG is the measurement), intracranial
+    # hemorrhage AI detection, and an iEEG decoding benchmark.
+    assert derive_science_domains(
+        "Robot assistants during high mental workload",
+        "Neural activity measured through electroencephalography (EEG) and behavioral performance.",
+    ) == ["neuroscience"]
+    assert derive_science_domains(
+        "Retrospective comparison of AI algorithms",
+        "Detection of intracranial hemorrhage (ICH) in the emergency radiology department.",
+    ) == ["neuroscience"]
+    assert derive_science_domains(
+        "iMINDBench: iEEG Multi-Institution Neural Decoding Benchmark"
+    ) == ["neuroscience"]
+
+
 def test_architecture_prose_does_not_tag():
     # Found in a corpus audit: three distinct mechanisms by which
     # non-neuro records said "neuron"/"brain". Layer-size talk, the

@@ -74,20 +74,22 @@ _RULES: Final[dict[str, dict[str, tuple[str, ...]]]] = {
             # optional for "neuro-prosthesis".
             r"neuro[- ]?prosthe",
             # Right edge closed so "brainstorm"/"brainstorming" cannot
-            # fire; hyphenated and spaced compounds (brain-wide, mouse
-            # brain) still match, and the closed compound benchmark name
-            # is listed separately.
+            # fire. Hyphenated, spaced, and en-dashed compounds -- brain-
+            # wide, mouse brain, brain-computer/machine interface,
+            # brain-to-text -- all still match, because any separator
+            # after "brain" is a word boundary; only digit compounds
+            # (brain2text) close the boundary, and those have their own
+            # pattern below. The closed-compound benchmark name is listed
+            # separately.
             r"brain\b",
             r"brainbench\b",
-            # Both interface spellings, hyphen/space/en-dash separated.
-            r"brain[-–— ](?:computer|machine) interface",
             # The brain-to-X neural-decoding naming family: Brain2Text,
             # Brain2Voice, Brain2Qwerty (fMRI-to-keyboard), and any later
-            # brain2X variant, plus the "brain-to-text" spelling. "brain\b"
-            # can never reach these: digits are word characters, so no
-            # boundary exists between "brain" and "2".
+            # brain2X variant. "brain\b" can never reach these: digits are
+            # word characters, so no boundary exists between "brain" and
+            # "2". The separator spelling ("brain-to-text") needs no
+            # pattern of its own -- see the brain\b note above.
             r"brain2\w+",
-            r"brain[-–— ]to[-–— ]\w+",
             r"bci\b",
             r"motor imagery",
             r"neural interface",

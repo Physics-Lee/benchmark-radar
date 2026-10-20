@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>对 issue #511 实施计划的建议</title>
+<style>
+  :root {
+    --ink: #1f2328;
+    --soft: #57606a;
+    --line: #d0d7de;
+    --bg: #ffffff;
+    --panel: #f6f8fa;
+    --blue: #0969da;
+    --blue-soft: #ddf4ff;
+    --green: #1a7f37;
+    --green-soft: #dafbe1;
+    --orange: #9a6700;
+    --orange-soft: #fff8c5;
+    --red: #cf222e;
+    --red-soft: #ffebe9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #e6edf3;
+      --soft: #9198a1;
+      --line: #3d444d;
+      --bg: #0d1117;
+      --panel: #161b22;
+      --blue: #58a6ff;
+      --blue-soft: #12233b;
+      --green: #3fb950;
+      --green-soft: #142a1b;
+      --orange: #d29922;
+      --orange-soft: #30290d;
+      --red: #f85149;
+      --red-soft: #341a1a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+    font-size: 16px;
+    line-height: 1.72;
+  }
+  main { max-width: 920px; margin: 0 auto; padding: 44px 24px 80px; }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  h1 { margin: 8px 0 12px; font-size: clamp(28px, 5vw, 40px); line-height: 1.2; }
+  h2 { margin: 42px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line); font-size: 22px; }
+  h3 { margin: 24px 0 8px; font-size: 17px; }
+  p { margin: 10px 0; }
+  ul, ol { padding-left: 1.4em; }
+  li { margin: 7px 0; }
+  code {
+    padding: .12em .38em;
+    border-radius: 5px;
+    background: var(--panel);
+    font-family: "Cascadia Code", Consolas, monospace;
+    font-size: .9em;
+  }
+  .eyebrow { color: var(--blue); font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .meta { color: var(--soft); font-size: 14px; }
+  .verdict {
+    margin: 28px 0;
+    padding: 20px 22px;
+    border: 1px solid var(--green);
+    border-radius: 12px;
+    background: var(--green-soft);
+  }
+  .verdict strong { color: var(--green); }
+  .card {
+    margin: 16px 0;
+    padding: 18px 20px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg);
+  }
+  .card.must { border-left: 5px solid var(--red); }
+  .card.product { border-left: 5px solid var(--orange); }
+  .label {
+    display: inline-block;
+    margin-bottom: 6px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .label.must { color: var(--red); background: var(--red-soft); }
+  .label.product { color: var(--orange); background: var(--orange-soft); }
+  .naming {
+    margin: 16px 0;
+    padding: 18px 20px;
+    border-radius: 10px;
+    background: var(--blue-soft);
+    border: 1px solid var(--blue);
+  }
+  .naming table { width: 100%; border-collapse: collapse; }
+  .naming th, .naming td { padding: 8px 10px; border-bottom: 1px solid color-mix(in srgb, var(--blue) 35%, transparent); text-align: left; }
+  .naming tr:last-child th, .naming tr:last-child td { border-bottom: 0; }
+  .naming th { width: 150px; color: var(--soft); font-weight: 600; }
+  .quote { font-size: 20px; font-weight: 700; line-height: 1.4; }
+  .good { color: var(--green); }
+  .sequence { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 14px 0; }
+  .step { padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); font-size: 14px; }
+  .arrow { color: var(--soft); }
+  footer { margin-top: 50px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--soft); font-size: 13px; }
+  @media (max-width: 580px) {
+    main { padding: 28px 18px 60px; }
+    .naming th, .naming td { display: block; width: 100%; padding-left: 0; }
+    .naming th { padding-bottom: 0; border-bottom: 0; }
+    .naming td { padding-top: 2px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">Benchmark Radar · Plan Review</div>
+  <h1>对 issue #511 第一切片实施计划的建议</h1>
+  <div class="meta">
+    评审对象：<a href="./index.html">AI for Neuroscience / BCI 支持计划</a> · 2026-09-02
+  </div>
+
+  <section class="verdict">
+    <strong>总体判断：方向正确，可以推进。</strong>
+    这份计划已经不是想法清单，而是一份接近可执行的工程方案。根因判断、数据分层、PR 拆分、风险清单和测量意识都很好。开工前建议先修正一个数据契约漏洞，并收紧第一版的产品承诺。
+  </section>
+
+  <h2>1. 必须先修：QueryService 没有真正拿到历史标签</h2>
+  <div class="card must">
+    <span class="label must">BLOCKER</span>
+    <p>计划规定 <code>science_domains</code> 只在 <code>classify/dashboard_data</code> 阶段派生，不写回历史快照；但 QueryService 的 Radar 候选直接从原始快照读取。</p>
+    <p>因此，如果只在 <code>query.py</code> 的字段映射处增加：</p>
+    <p><code>"science_domains": list(item.get("science_domains") or [])</code></p>
+    <p>那么历史记录得到的仍然会是空数组。测试若只断言“字段存在”，会制造一个表面通过、实际不可用的契约。</p>
+  </div>
+
+  <h3>建议选择一种明确方案</h3>
+  <ol>
+    <li><strong>完整方案：</strong>dashboard 和 QueryService 调用同一个确定性派生函数，并让离线数据包携带同版本的域规则或派生结果。</li>
+    <li><strong>收窄方案：</strong>第一切片明确只支持网页筛选，不承诺本地查询返回域标签，也暂不升级 Query schema。</li>
+  </ol>
+  <p>无论选哪一种，验收测试都应使用真实历史标题，断言它得到 <code>neuroscience</code> 或 <code>bci</code>；不要只检查字段是否存在。</p>
+
+  <h2>2. 产品命名：保留 AI for Science，但不要把 Preview 塞进导航</h2>
+  <div class="card product">
+    <span class="label product">PRODUCT SCOPE</span>
+    <p><code>AI for Science · Neuroscience/BCI · preview</code> 能准确说明范围，但作为导航名太长，三个片段挤在一起也比较像面包屑。移动端尤其容易拥挤。</p>
+  </div>
+
+  <div class="naming">
+    <div class="quote">推荐的信息层级</div>
+    <table>
+      <tr><th>导航</th><td><strong>AI for Science</strong></td></tr>
+      <tr><th>页面标题</th><td><strong>AI for Science · Neuroscience &amp; BCI</strong></td></tr>
+      <tr><th>状态徽标</th><td><strong>Preview</strong></td></tr>
+    </table>
+  </div>
+
+  <p>这样既保留未来扩展到 climate、materials、biology、chemistry 的空间，又不会让读者误以为第一版已经覆盖整个 AI4S。</p>
+  <p>如果产品上必须合成一个名字，建议使用：<strong>AI for Science · Neuro/BCI Preview</strong>。</p>
+
+  <h2>3. 测量协议：在干跑前先写清“什么叫达标”</h2>
+  <p>“随机抽 30 条”是一个好起点，但建议改成<strong>按来源分层抽样</strong>。否则 arXiv 等大来源可能掩盖某个小来源的严重噪声。</p>
+  <ul>
+    <li>为总体精度、每个新增来源的最低精度和每日最大新增量预设门槛。</li>
+    <li>种子清单继续用于测召回，不要把未被发现的种子从分母中移除。</li>
+    <li>把误报按原因归类：通用 neural network、医学但非神经科学、PathMap 假说数据、缩写歧义等。</li>
+    <li>将最终数字写回 <code>config.yml</code> 注释和 PR 描述，保持可复核。</li>
+  </ul>
+
+  <h2>4. #512 建议单独合并</h2>
+  <p>把 #512 与新 tab 放在同一个 PR 里虽然能避免导航短暂变成 7 项，但会把两个不同目的的变更绑在一起，增加评审和回滚成本。</p>
+  <div class="sequence" aria-label="建议的合并顺序">
+    <span class="step">PR 1 · science_domains</span>
+    <span class="arrow">→</span>
+    <span class="step">PR 2 · discovery coverage</span>
+    <span class="arrow">→</span>
+    <span class="step">PR 3a · #512 nav cleanup</span>
+    <span class="arrow">→</span>
+    <span class="step">PR 3b · AI for Science view</span>
+  </div>
+  <p>导航会经历 6 → 5 → 6，而不是 6 → 7 → 6；同时 #512 和新页面都可以独立验证、独立回滚。</p>
+
+  <h2>5. 值得保留的设计判断</h2>
+  <ul>
+    <li><span class="good">✓</span> 先证明漏检来自源与词表，而不是直接改评分算法。</li>
+    <li><span class="good">✓</span> 把 <code>science_domains</code> 定义为路由信号，而不是质量声明。</li>
+    <li><span class="good">✓</span> 不改历史快照，通过确定性重放让历史记录立即亮起。</li>
+    <li><span class="good">✓</span> 明确排除 <code>neural network</code> 等高频误报，并用负例测试锁死。</li>
+    <li><span class="good">✓</span> 提前识别 <code>rubric-nav</code> 空值监听和静态页面激活态问题。</li>
+    <li><span class="good">✓</span> 先测量再决定是否保留 <code>eess.SP</code>，而不是凭感觉扩大来源。</li>
+  </ul>
+
+  <h2>结论</h2>
+  <p><strong>建议批准方向，但在动工前补一版计划修订：</strong>先决定 QueryService 的标签来源；采用“导航短名 + 页面范围 + Preview 徽标”的命名层级；补充量化去留门槛；把 #512 拆成独立 PR。完成这四点后，方案就比较稳了。</p>
+
+  <footer>
+    Review note for Benchmark Radar issue #511 · 仅评审实施边界与契约闭环，不替代正式测量结果
+  </footer>
+</main>
+</body>
+</html>

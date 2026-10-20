@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>让入组证据更明确 · PR #647 讨论笔记</title>
+  <style>
+    :root{--bg:#f5f3ed;--paper:#fffef9;--ink:#202c32;--muted:#59696e;--line:#dbdfd8;--green:#246454;--pale:#e8f0e9;--amber:#866020;--code:#edf0eb;--shadow:0 16px 50px #25382a09}
+    *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:24px}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.85 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px}a:focus-visible,summary:focus-visible,button:focus-visible{outline:3px solid var(--green);outline-offset:5px}main{max-width:1040px;margin:auto;padding:54px 32px 40px}.eyebrow,.number{font:600 12px/1.5 ui-monospace,Consolas,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--green)}header{padding:14px 0 38px;border-bottom:1px solid var(--line)}h1{font-size:clamp(32px,5.2vw,58px);line-height:1.22;letter-spacing:-.045em;margin:22px 0}h1 span{display:block;color:var(--green)}.lead{max-width:720px;font-size:19px;line-height:1.8}.meta{font-size:13px;color:var(--muted)}.pill{display:inline-block;border:1px solid var(--line);border-radius:30px;padding:3px 12px;margin:3px 5px 3px 0;font-size:12px}.metrics{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:16px;margin:28px 0 12px}.metric{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:23px;box-shadow:var(--shadow)}.metric strong{display:block;font-size:38px;line-height:1.35;letter-spacing:-.04em}.metric strong em{font-style:normal;color:var(--green)}.metric span{color:var(--muted);font-size:13px}.caption{font-size:12px;color:var(--muted);line-height:1.8}nav{display:flex;gap:12px 22px;flex-wrap:wrap;margin:28px 0 0;font-size:13px}section{margin-top:48px}h2{font-size:26px;line-height:1.4;letter-spacing:-.025em;margin:8px 0 22px}h3{font-size:17px;margin:0 0 8px}p{margin:10px 0 15px}code{font: .88em/1.7 ui-monospace,Consolas,monospace;background:var(--code);border-radius:5px;padding:2px 5px;overflow-wrap:anywhere}pre{background:var(--code);padding:18px 22px;border-radius:12px;overflow:auto}pre code{padding:0}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:23px}.card p{font-size:14px}.label{display:block;font-size:12px;letter-spacing:.06em;color:var(--muted);margin-bottom:12px}.quote{font-size:22px;border-left:4px solid var(--green);padding:10px 24px;margin:26px 0;background:var(--pale);border-radius:0 12px 12px 0}.quote small{display:block;font-size:12px;color:var(--muted);margin-top:10px}.steps{list-style:none;margin:0;padding:0;counter-reset:step}.steps li{position:relative;padding:0 0 24px 45px;border-left:1px solid var(--line);margin-left:13px}.steps li:last-child{padding-bottom:0;border:0}.steps li:before{counter-increment:step;content:counter(step);position:absolute;left:-14px;top:0;width:28px;height:28px;border-radius:50%;background:var(--green);color:var(--paper);text-align:center;font:600 12px/28px ui-monospace,monospace}.steps p{font-size:14px;margin-top:4px}.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--paper)}table{border-collapse:collapse;width:100%;min-width:620px;font-size:14px}th,td{text-align:left;vertical-align:top;padding:17px 20px;border-bottom:1px solid var(--line)}th{font-size:12px;background:var(--pale)}tr:last-child td{border:0}td:first-child{width:19%;font-weight:600}td:nth-child(2){width:53%}.note{background:var(--pale);border-radius:12px;padding:18px 22px;font-size:14px;margin:18px 0}.split{display:grid;grid-template-columns:1fr 1fr;gap:20px}.list{padding-left:21px;font-size:14px}.list li{margin:10px 0}details{border:1px solid var(--line);border-radius:12px;padding:15px 20px;margin-top:18px}summary{font-size:14px;font-weight:600;cursor:pointer}details p{font-size:14px}.status{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}.status span{font-size:12px;border:1px solid var(--line);border-radius:6px;padding:5px 10px}footer{border-top:1px solid var(--line);margin-top:52px;padding-top:22px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:20px}button{font:inherit;color:var(--green);border:1px solid var(--line);background:var(--paper);padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;height:fit-content}
+    @media(prefers-color-scheme:dark){:root{--bg:#14201f;--paper:#1b2a28;--ink:#e7ede6;--muted:#a5b6b0;--line:#344944;--green:#91cbb1;--pale:#233b32;--code:#263833;--shadow:none}}
+    @media(max-width:720px){main{padding:28px 20px}.metrics,.cards,.split{grid-template-columns:1fr}.metric{padding:18px 22px}.metric strong{font-size:32px}.lead{font-size:17px}section{margin-top:38px}.quote{font-size:19px;padding:15px 19px}footer{flex-direction:column}nav{gap:9px 16px}}
+    @media print{body{background:white;color:#202c32;font-size:11px}:root{--paper:white;--ink:#202c32;--muted:#59696e;--line:#ccc;--green:#246454;--pale:#f1f5ef;--code:#f4f4f4}main{max-width:none;padding:0}header{padding:0 0 18px}h1{font-size:35px}h2{font-size:21px}section{margin-top:25px}.cards,.metrics,.split{display:block}.card,.metric{margin-bottom:12px;box-shadow:none;break-inside:avoid}nav,button{display:none}.table-wrap{overflow:visible}table{min-width:0;font-size:11px}th,td{padding:10px}.quote{font-size:19px}a{color:inherit}.caption,.meta,footer{font-size:10px}}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Benchmark Radar / PR #647 / Decision note</div>
+    <h1>让入组证据<span>更明确。</span></h1>
+    <p class="lead">一次从 PR 审查开始的讨论，最终落在一个简单选择上：<strong>保留 <code>neuroscience</code> 标签，收紧入组关键词，并完全移除出组关键词机制。</strong></p>
+    <div class="meta">讨论整理于 2026-10-20 · 本地实现与对话记录 · <a href="https://github.com/ktwu01/benchmark-radar/pull/647">查看 PR #647</a></div>
+    <div class="status"><span>字段名保留</span><span>高精度入组白名单</span><span>全局排除机制删除</span><span>代码改动待人工查看</span></div>
+    <div class="metrics">
+      <div class="metric"><strong>107 <em>→ 46</em></strong><span>被打标签的唯一雷达记录</span></div>
+      <div class="metric"><strong>0</strong><span>出组关键词</span></div>
+      <div class="metric"><strong>107</strong><span>相关测试通过</span></div>
+    </div>
+    <p class="caption">数字来自讨论当时的本地审计：58 个历史快照，10,161 个按来源与 source_id 去重的雷达发现记录。107 → 46 是标签命中数量变化，底层记录仍保留；它不代表整个 benchmark catalog 的规模，也不是准确率。此页未刷新远端 PR 或重跑全部 CI。</p>
+    <nav aria-label="笔记目录"><a href="#problems">三个问题</a><a href="#decisions">如何做决定</a><a href="#rules">最终入组词</a><a href="#examples">行为变化</a><a href="#verification">验证与边界</a></nav>
+  </header>
+
+  <section id="problems">
+    <div class="number">01 / Review</div>
+    <h2>测试通过，语义仍然可能错。</h2>
+    <div class="cards">
+      <article class="card"><span class="label">漏标 · 整条记录被否决</span><h3>一个普通短语挡住了真证据</h3><p>脑类器官论文 <em>Using Brain Organoids to Explore Human Neurobiology</em> 明确讨论神经生物学，却因摘要出现 “the brain like …” 而触发 <code>brain[- ]like</code> 排除规则。</p><p>旧机制把整条记录排除，连其他独立证据也一起丢掉。</p></article>
+      <article class="card"><span class="label">误标 · 计算架构比喻</span><h3>“brain” 不一定指生物脑</h3><p><em>Omni Interaction Agent Technical Report</em> 用 “cerebellum-brain collaborative framework” 描述系统架构。</p><p>裸 <code>brain</code> 足以触发入组，已有的几个比喻排除词没有覆盖这种说法。</p></article>
+      <article class="card"><span class="label">误标 · 学科词歧义</span><h3>电生理也可能属于心脏研究</h3><p>一项心房颤动研究写到双心房的 “electrophysiological properties”，被 <code>electrophysiolog</code> 命中。</p><p>摘要没有出现既有排除词，心脏研究因此进入神经科学标签。</p></article>
+    </div>
+    <p class="caption">这些案例取自仓库历史快照。审查时的本地 PR 提交为 <code>17cf73c</code>；当时无法连通 GitHub，未确认远端是否已有更新。</p>
+  </section>
+
+  <section id="decisions">
+    <div class="number">02 / Conversation</div>
+    <h2>真正改变方向的是“减少入口”。</h2>
+    <blockquote class="quote">“要不我们减少一些【入组关键词】，比如只保留 EEG、ECoG 之类的。这样也不用写很多的【出组关键词】。”<small>用户提出的核心方向</small></blockquote>
+    <ol class="steps">
+      <li><h3>先讨论如何修补三个错误</h3><p>初步方案是区分强弱证据、限定上下文范围，让排除词只影响局部命中。但规则会变得更复杂，也需要维护更多例外。</p></li>
+      <li><h3>转向高精度入组白名单</h3><p>收起 <code>brain</code>、<code>cortical</code>、<code>electrophysiology</code> 等宽泛入口，保留更明确的记录方式、接口短语和实验技术。接受召回范围收窄。</p></li>
+      <li><h3>讨论过 BCI 改名，最终保留现有字段</h3><p>BCI 无法概括全部保留内容：睡眠脑电、fMRI 或钙成像不一定属于脑机接口。用户最终明确：维持 <code>science_domains: ["neuroscience"]</code>，只收紧入组关键词。</p></li>
+      <li><h3>删除全部出组关键词</h3><p>最终实现仅检查正向入组规则；任何旧出组短语都无法再否决整条记录。MEG、ECoG 的歧义通过入组条件中的技术搭配处理。</p></li>
+    </ol>
+    <div class="note"><strong>名称与覆盖范围分开理解：</strong><code>neuroscience</code> 仍是领域标签；当前关键词只是保守的发现入口。未命中意味着没有满足这套规则，不能据此断言该记录与神经科学无关。</div>
+  </section>
+
+  <section id="rules">
+    <div class="number">03 / Final rules</div>
+    <h2>保留明确证据，移除宽泛入口。</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th scope="col">类别</th><th scope="col">实际保留内容</th><th scope="col">入组方式</th></tr></thead>
+      <tbody>
+        <tr><td>记录与影像</td><td>EEG、sEEG、fMRI、fNIRS；electroencephalograph*、electrocorticograph*、magnetoencephalograph*</td><td>直接命中，缩写带词边界</td></tr>
+        <tr><td>需要消歧的缩写</td><td>ECoG + EEG / signal / recording / electrode / data / based；MEG + EEG / data / recording / signal / source / study / system / sensor</td><td>缩写须与规定词相邻</td></tr>
+        <tr><td>接口与硬件</td><td>BCI、brain-computer interface、brain-machine interface、brain-to-text / speech 等指定短语、brain2X、neural interface、neuroprosthe*、Utah array</td><td>明确接口或硬件词</td></tr>
+        <tr><td>范式与实验技术</td><td>SSVEP、P300、spike sorting、spike train(s)、connectome*、calcium imaging、optogenetic*</td><td>具体范式或技术词</td></tr>
+      </tbody>
+    </table></div>
+    <p class="caption">* 表示实现中的词干匹配。此表概述工作区代码；精确拼写与分隔符范围以 <a href="../src/benchmark_radar/science_domains.py">science_domains.py</a> 为准。</p>
+    <div class="split">
+      <article><h3>已移除的宽泛入口</h3><p><code>brain</code>、<code>neuroscience</code>、<code>neurobiology</code>、<code>neuroimaging</code>、<code>cortical</code>、<code>intracranial</code>、<code>hippocampal</code>、<code>prefrontal</code>、<code>electrophysiology</code>、<code>neural activity</code>、<code>neural signals</code>、裸 <code>motor imagery</code> 等，均不再独立触发入组。</p></article>
+      <article><h3>一处审计后保留的入口</h3><p><code>NeuroTechX/moabb</code> 的摘要只有 “Mother of All BCI Benchmarks”。删除裸 BCI 会丢掉这条明确记录，因此保留带词边界的 <code>bci</code>。当时的全量雷达记录扫描未发现它造成的歧义。</p></article>
+    </div>
+    <pre><code>输入：记录自己的 title + summary
+  ↓ 大小写归一化、词边界与规定技术搭配
+命中任一入组规则？
+  ├─ 是 → science_domains: ["neuroscience"]
+  └─ 否 → science_domains: []</code></pre>
+  </section>
+
+  <section id="examples">
+    <div class="number">04 / Before &amp; after</div>
+    <h2>几个案例说明规则的变化。</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th scope="col">案例</th><th scope="col">文本中的证据</th><th scope="col">最终行为</th></tr></thead>
+      <tbody>
+        <tr><td>Omni Interaction Agent</td><td>架构比喻 cerebellum-brain；没有其他入组证据</td><td>不打标签</td></tr>
+        <tr><td>心房电生理研究</td><td>electrophysiological properties；没有神经记录方式或接口证据</td><td>不打标签</td></tr>
+        <tr><td>脑类器官论文</td><td>标题单独不再触发；历史完整摘要还有 calcium imaging</td><td>完整记录仍打标签；brain like 不再否决它</td></tr>
+        <tr><td>MOABB</td><td>摘要中的 BCI</td><td>保留标签</td></tr>
+        <tr><td>ECOG 肿瘤状态评分</td><td>ECOG PS，不满足 ECoG 的技术搭配</td><td>不打标签</td></tr>
+        <tr><td>EEG 预处理</td><td>EEG；即使同时提及 ECG artifact removal</td><td>保留标签</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="verification">
+    <div class="number">05 / Evidence &amp; scope</div>
+    <h2>收紧命中范围，保留可追溯的边界。</h2>
+    <ul class="list">
+      <li><strong>审计范围：</strong>58 个快照、10,161 个唯一雷达发现记录；标签命中由 107 条收紧至 46 条。这些计数衡量雷达发现记录，不是 benchmark catalog、论文或模型的数量。</li>
+      <li><strong>验证记录：</strong>最终改动后，science_domains、query_surfaces、snapshots 三组相关测试共 107 项通过；<code>git diff --check</code> 通过。</li>
+      <li><strong>实际修改：</strong>仅调整 <a href="../src/benchmark_radar/science_domains.py">入组规则</a>与<a href="../tests/test_science_domains.py">相关测试</a>。用户要求先人工查看，修改未提交 Git commit。</li>
+      <li><strong>规则的作用：</strong>打领域路由标签，不改变评分；没有标签的记录仍存在于原始语料中，历史快照没有因此被删除或改写。</li>
+    </ul>
+    <details><summary>这些结果还没有证明什么？</summary><p>命中数量减少不等于准确率提高了多少；讨论中没有建立完整人工标注集，也没有测出 precision 或 recall。关键词匹配仍可能误标，MEG / ECoG 搭配词也不是完整的语义理解。当前没有出组机制，因此明确技术词出现在否定、对比或背景介绍中时，仍可能触发标签。</p><p>早期估算曾得到 43 条；最终实现保留 BCI 和少量明确实验技术后为 46 条。初审的 122 项测试与修改后的 107 项测试属于不同版本的测试集合，不能用数量差推断质量。全文数字保留为讨论证据，不随远端代码或数据更新而自动变化。</p></details>
+  </section>
+  <footer><div>一份关于关键词规则设计的讨论笔记。<br>整理日期：2026-10-20 · Benchmark Radar PR #647</div><button type="button" onclick="window.print()">打印 / 保存 PDF</button></footer>
+</main>
+</body>
+</html>

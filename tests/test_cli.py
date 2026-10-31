@@ -676,6 +676,37 @@ def test_daily_radar_yml_renders_social_material_instead_of_an_issue():
     assert "--social-output out/social.md" in social_step["run"]
 
 
+def test_app_token_steps_use_client_id_and_fall_back_to_github_token():
+    """actions/create-github-app-token v3 deprecated app-id in favor of client-id
+    and fails when RADAR_APP_ID is unset. Guard the App token step and fall back
+    to github.token with contents: write so snapshots and the public ledger still
+    commit when no GitHub App is configured."""
+    daily = yaml.safe_load(Path(".github/workflows/daily-radar.yml").read_text(encoding="utf-8"))
+    persist = daily["jobs"]["persist-snapshot"]
+    assert persist["permissions"]["contents"] == "write"
+    daily_token_step = next(step for step in persist["steps"] if step.get("id") == "app-token")
+    assert "client-id" in daily_token_step["with"]
+    assert "app-id" not in daily_token_step["with"]
+    assert "RADAR_APP_CLIENT_ID" in daily_token_step["if"]
+    daily_checkout = next(
+        step for step in persist["steps"] if step.get("uses", "").startswith("actions/checkout@")
+    )
+    assert "github.token" in daily_checkout["with"]["token"]
+
+    points = yaml.safe_load(
+        Path(".github/workflows/contributor-points.yml").read_text(encoding="utf-8")
+    )
+    ledger = points["jobs"]["update-public-ledger"]
+    points_token_step = next(step for step in ledger["steps"] if step.get("id") == "app-token")
+    assert "client-id" in points_token_step["with"]
+    assert "app-id" not in points_token_step["with"]
+    assert "RADAR_APP_CLIENT_ID" in points_token_step["if"]
+    points_checkout = next(
+        step for step in ledger["steps"] if step.get("uses", "").startswith("actions/checkout@")
+    )
+    assert "github.token" in points_checkout["with"]["token"]
+
+
 def test_questions_required_raises_without_a_flag_or_key(monkeypatch, tmp_path):
     monkeypatch.setenv("OPENAI_QUESTIONS_REQUIRED", "true")
     _stub_sources(monkeypatch, datetime.now(UTC))

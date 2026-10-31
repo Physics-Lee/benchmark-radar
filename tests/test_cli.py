@@ -687,7 +687,7 @@ def test_app_token_steps_use_client_id_and_fall_back_to_github_token():
     daily_token_step = next(step for step in persist["steps"] if step.get("id") == "app-token")
     assert "client-id" in daily_token_step["with"]
     assert "app-id" not in daily_token_step["with"]
-    assert "RADAR_APP_PRIVATE_KEY" in daily_token_step["if"]
+    assert "RADAR_APP_CLIENT_ID" in daily_token_step["if"]
     daily_checkout = next(
         step for step in persist["steps"] if step.get("uses", "").startswith("actions/checkout@")
     )
@@ -700,7 +700,7 @@ def test_app_token_steps_use_client_id_and_fall_back_to_github_token():
     points_token_step = next(step for step in ledger["steps"] if step.get("id") == "app-token")
     assert "client-id" in points_token_step["with"]
     assert "app-id" not in points_token_step["with"]
-    assert "RADAR_APP_PRIVATE_KEY" in points_token_step["if"]
+    assert "RADAR_APP_CLIENT_ID" in points_token_step["if"]
     points_checkout = next(
         step for step in ledger["steps"] if step.get("uses", "").startswith("actions/checkout@")
     )
